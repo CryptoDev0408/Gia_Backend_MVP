@@ -1,0 +1,276 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT & AUTHENTICATION
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Wallet-based authentication (Primary)
+  walletAddress String? @unique
+  nonce         String? // For wallet signature verification
+
+  // Email-based authentication (Optional)
+  email        String?  @unique
+  passwordHash String?
+  emailVerified Boolean @default(false)
+
+  // User profile
+  username     String?
+  displayName  String?
+  avatarUrl    String?
+  role         UserRole @default(USER)
+
+  // Relations
+  likes    PostLike[]
+  comments PostComment[]
+  saves    PostSave[]
+
+  @@index([walletAddress])
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+// ============================================
+// RAW SCRAPED DATA
+// ============================================
+
+model ScrapedPost {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Source information
+  platform      SocialPlatform
+  platformPostId String        @unique // Original post ID from platform
+  sourceUrl     String?
+
+  // Raw scraped data (before normalization)
+  rawContent Json // Store entire raw response
+
+  // Basic extracted fields
+  author       String
+  authorHandle String
+  text         String  @db.Text
+  mediaUrls    Json? // Array of image/video URLs
+  postedAt     DateTime
+
+  // Engagement metrics (raw)
+  likes    Int @default(0)
+  comments Int @default(0)
+  shares   Int @default(0)
+  views    Int @default(0)
+
+  // Processing status
+  isProcessed Boolean @default(false)
+  processedAt DateTime?
+
+  // Relation to normalized post
+  normalizedPost NormalizedPost?
+
+  @@index([platform, postedAt])
+  @@index([isProcessed])
+  @@map("scraped_posts")
+}
+
+// ============================================
+// NORMALIZED & PROCESSED DATA
+// ============================================
+
+model NormalizedPost {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Link to raw scraped data
+  scrapedPostId String       @unique
+  scrapedPost   ScrapedPost @relation(fields: [scrapedPostId], references: [id], onDelete: Cascade)
+
+  // Normalized content
+  cleanedText String @db.Text
+  hashtags    Json // Array of hashtags
+  keywords    Json // Array of extracted keywords
+  mentions    Json? // Array of @mentions
+
+  // Platform info
+  platform      SocialPlatform
+  author        String
+  authorHandle  String
+  authorUrl     String?
+  mediaUrls     Json?
+  postedAt      DateTime
+
+  // Engagement metrics
+  likesCount    Int @default(0)
+  commentsCount Int @default(0)
+  sharesCount   Int @default(0)
+  viewsCount    Int @default(0)
+
+  // AI-calculated scores
+  viralityScore  Int @default(0) // 0-100
+  relevanceScore Int @default(0) // 0-100
+  qualityScore   Int @default(0) // 0-100
+
+  // Clustering
+  clusterId String?
+  cluster   TrendCluster? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+
+  // User interactions
+  likes    PostLike[]
+  comments PostComment[]
+  saves    PostSave[]
+
+  @@index([platform, postedAt])
+  @@index([clusterId])
+  @@index([viralityScore])
+  @@index([relevanceScore])
+  @@map("normalized_posts")
+}
+
+// ============================================
+// TREND CLUSTERING
+// ============================================
+
+model TrendCluster {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Cluster identification
+  clusterKey String @unique // Hash of common hashtags/keywords
+
+  // Cluster metadata
+  commonHashtags Json // Array of hashtags that define this cluster
+  commonKeywords Json // Array of keywords
+  
+  // AI-generated insights
+  title          String
+  aiInsight      String  @db.Text
+  trendScore     Int     @default(0) // 0-100
+  growthPercentage Float @default(0)
+
+  // Time tracking
+  firstSeenAt DateTime
+  lastSeenAt  DateTime
+  isActive    Boolean  @default(true)
+
+  // Relations
+  posts NormalizedPost[]
+
+  @@index([isActive, trendScore])
+  @@index([lastSeenAt])
+  @@map("trend_clusters")
+}
+
+// ============================================
+// USER INTERACTIONS
+// ============================================
+
+model PostLike {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   NormalizedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  content String @db.Text
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   NormalizedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+  @@map("post_comments")
+}
+
+model PostSave {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   NormalizedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@map("post_saves")
+}
+
+// ============================================
+// SYSTEM & JOB TRACKING
+// ============================================
+
+model ScrapingJob {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  platform       SocialPlatform
+  status         JobStatus      @default(PENDING)
+  
+  startedAt      DateTime?
+  completedAt    DateTime?
+  
+  postsScraped   Int           @default(0)
+  postsProcessed Int           @default(0)
+  errorMessage   String?       @db.Text
+  
+  metadata       Json? // Store job-specific metadata
+
+  @@index([platform, status])
+  @@index([createdAt])
+  @@map("scraping_jobs")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum SocialPlatform {
+  TWITTER
+  INSTAGRAM
+  TIKTOK
+  PINTEREST
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
