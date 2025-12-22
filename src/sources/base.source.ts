@@ -19,10 +19,25 @@ export interface ScrapedPostData {
 	rawContent: any; // Store entire raw response
 }
 
-export interface ScrapingOptions {
-	maxPosts?: number;
-	keywords?: string[];
+export interface ScrapingConditions {
+	// Fashion-oriented filters
 	hashtags?: string[];
+	keywords?: string[];
+
+	// Result limits
+	maxResults?: number;
+	maxPostsPerHashtag?: number;
+
+	// Timeouts
+	pageTimeout?: number;
+	scrollTimeout?: number;
+	navigationTimeout?: number;
+
+	// Thresholds
+	minEngagement?: number;
+	minLikes?: number;
+
+	// Date filters
 	since?: Date;
 	until?: Date;
 }
@@ -42,7 +57,7 @@ export abstract class BaseSocialMediaSource {
 	/**
 	 * Scrape posts from the platform
 	 */
-	abstract scrape(options: ScrapingOptions): Promise<ScrapedPostData[]>;
+	abstract scrape(conditions: ScrapingConditions): Promise<ScrapedPostData[]>;
 
 	/**
 	 * Clean up resources (close browser, disconnect, etc.)

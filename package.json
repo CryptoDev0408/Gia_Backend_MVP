@@ -10,7 +10,9 @@
 		"prisma:generate": "prisma generate",
 		"prisma:migrate": "prisma migrate dev",
 		"prisma:studio": "prisma studio",
-		"seed": "ts-node src/database/seed.ts"
+		"seed": "ts-node src/database/seed.ts",
+		"test:instagram": "ts-node src/tests/test-instagram.ts",
+		"test:random": "ts-node src/tests/test-random.ts"
 	},
 	"keywords": [
 		"ai",

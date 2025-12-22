@@ -6,6 +6,7 @@ import { logger } from './utils/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import routes from './routes';
 import { CronScheduler } from './jobs/cron.scheduler';
+import { scrapingService } from './services/scraping.service';
 
 const app: Application = express();
 
@@ -76,6 +77,16 @@ app.listen(PORT, () => {
 	logger.info(`📝 Environment: ${config.nodeEnv}`);
 	logger.info(`🌐 API URL: http://localhost:${PORT}/api/${config.apiVersion}`);
 
+	// Start scraping service (async)
+	if (config.scraping.enabled) {
+		logger.info('📸 Starting Instagram scraping service (async)');
+		scrapingService.start().catch(error => {
+			logger.error('Failed to start scraping service:', error);
+		});
+	} else {
+		logger.info('📸 Scraping service disabled');
+	}
+
 	// Start cron jobs
 	if (config.scraping.enabled) {
 		logger.info('⏰ Starting cron scheduler');
@@ -86,14 +97,16 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
 	logger.info('Shutting down gracefully...');
+	await scrapingService.stop();
 	CronScheduler.stop();
 	process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
 	logger.info('Shutting down gracefully...');
+	await scrapingService.stop();
 	CronScheduler.stop();
 	process.exit(0);
 });
