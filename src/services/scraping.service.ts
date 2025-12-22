@@ -18,14 +18,7 @@ export class ScrapingService {
 
 		// Default fashion-focused scraping conditions
 		this.defaultConditions = {
-			hashtags: [
-				'fashion',
-				'fashiontrends',
-				'streetstyle',
-				'ootd',
-				'fashionweek',
-				'fashionblogger'
-			],
+			hashtags: ['fashion'],
 			keywords: ['runway', 'designer', 'style', 'outfit', 'trend'],
 			maxResults: 30,
 			maxPostsPerHashtag: 5,

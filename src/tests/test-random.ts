@@ -23,7 +23,8 @@ async function testRandomURLScraping() {
 			// 'https://www.instagram.com/p/DPHKxXWEiyb/?igsh=bG9uZm1zeHR1Nndu',
 			// 'https://www.upwork.com/jobs/~021968034018269460686',
 			// 'https://about.google/',
-			'https://x.com/ofviince/',
+			// 'https://x.com/ofviince/',
+			"https://www.gucci.com/press"
 		];
 
 		// Get URL from command line if provided
