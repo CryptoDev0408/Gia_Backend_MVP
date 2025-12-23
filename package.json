@@ -8,6 +8,8 @@
 		"build": "tsc",
 		"start": "node dist/server.js",
 		"test:elle": "ts-node src/tests/test-elle.ts",
+		"test:harper": "ts-node src/tests/test-harper.ts",
+		"test:etc": "ts-node src/tests/test-etc.ts",
 		"prisma:generate": "prisma generate",
 		"prisma:migrate": "prisma migrate dev",
 		"prisma:studio": "prisma studio",

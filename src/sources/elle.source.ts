@@ -240,7 +240,7 @@ export class ElleSource extends BaseSocialMediaSource {
 
 				posts.push({
 					platformPostId: article.id,
-					platform: 'INSTAGRAM', // Using INSTAGRAM as placeholder since it's in the enum
+					platform: 'ELLE',
 					author: article.author || 'Elle Editorial',
 					authorHandle: 'elle',
 					text: article.text,

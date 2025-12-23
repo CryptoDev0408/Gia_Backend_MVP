@@ -5,7 +5,7 @@ import { logger } from '../utils/logger';
 /**
  * EtcSocial Scraper
  * Generic scraper for any URL/website that doesn't have a dedicated source
- * Fetches raw HTML content from any given URL
+ * Fetches and parses raw HTML content from any given URL
  */
 export class EtcSocialSource extends BaseSocialMediaSource {
 	private browser: Browser | null = null;
@@ -90,6 +90,9 @@ export class EtcSocialSource extends BaseSocialMediaSource {
 					// Get raw HTML content
 					const htmlContent = await this.page!.content();
 
+					// Parse HTML for articles, links, and content
+					const parsedContent = this.parseHtmlContent(htmlContent, url);
+
 					// Extract some basic metadata
 					const metadata = await this.page!.evaluate(() => {
 						const getMetaContent = (name: string) => {
@@ -108,15 +111,18 @@ export class EtcSocialSource extends BaseSocialMediaSource {
 					logger.info(`✓ Fetched HTML from: ${url}`);
 					logger.info(`  Title: ${metadata.title}`);
 					logger.info(`  HTML Size: ${(htmlContent.length / 1024).toFixed(2)} KB`);
+					logger.info(`  Articles found: ${parsedContent.articles.length}`);
+					logger.info(`  Images found: ${parsedContent.images.length}`);
+					logger.info(`  Links found: ${parsedContent.links.length}`);
 
 					// Create a normalized post data entry
 					posts.push({
 						platformPostId: `etc-${Date.now()}-${Buffer.from(url).toString('base64').substring(0, 10)}`,
-						platform: 'INSTAGRAM', // Using INSTAGRAM as placeholder since base type doesn't have ETCSOCIAL
-						author: metadata.author || 'Unknown',
+						platform: 'ETC',
+						author: parsedContent.author || metadata.author || 'Unknown',
 						authorHandle: new URL(url).hostname,
 						text: metadata.description || metadata.title || 'No description available',
-						mediaUrls: undefined,
+						mediaUrls: parsedContent.images.length > 0 ? parsedContent.images.slice(0, 5) : undefined,
 						postedAt: new Date(),
 						likes: 0,
 						comments: 0,
@@ -126,6 +132,7 @@ export class EtcSocialSource extends BaseSocialMediaSource {
 						rawContent: {
 							html: htmlContent,
 							metadata: metadata,
+							parsedContent: parsedContent,
 							fetchedAt: new Date().toISOString()
 						}
 					});
@@ -169,12 +176,6 @@ export class EtcSocialSource extends BaseSocialMediaSource {
 				await this.initialize();
 			}
 
-			// Test with a simple URL
-			// await this.page!.goto('https://instagram.com', {
-			// 	waitUntil: 'networkidle',
-			// 	timeout: 10000
-			// });
-
 			logger.info('EtcSocial scraper connection test successful');
 			return true;
 		} catch (error) {
@@ -205,6 +206,121 @@ export class EtcSocialSource extends BaseSocialMediaSource {
 		} catch (error) {
 			logger.error(`Failed to fetch raw HTML from ${url}:`, error);
 			throw error;
+		}
+	}
+
+	/**
+	 * Parse HTML content to extract meaningful information
+	 */
+	private parseHtmlContent(html: string, sourceUrl: string): {
+		author: string | null;
+		articles: any[];
+		images: string[];
+		links: string[];
+	} {
+		const result = {
+			author: null as string | null,
+			articles: [] as any[],
+			images: [] as string[],
+			links: [] as string[]
+		};
+
+		try {
+			// Extract author from common patterns
+			const authorPatterns = [
+				/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i,
+				/<span[^>]*class=["'][^"']*author[^"']*["'][^>]*>([^<]+)<\/span>/i,
+				/<div[^>]*class=["'][^"']*byline[^"']*["'][^>]*>.*?<a[^>]*>([^<]+)<\/a>/i,
+				/by\s+<a[^>]*>([^<]+)<\/a>/i
+			];
+
+			for (const pattern of authorPatterns) {
+				const match = html.match(pattern);
+				if (match) {
+					result.author = this.cleanText(match[1]);
+					break;
+				}
+			}
+
+			// Extract article elements
+			const articlePattern = /<article[^>]*>([\s\S]*?)<\/article>/gi;
+			const articleMatches = html.matchAll(articlePattern);
+
+			for (const match of articleMatches) {
+				const articleHtml = match[1];
+
+				// Extract title
+				const titleMatch = articleHtml.match(/<h[1-6][^>]*>([^<]+)<\/h[1-6]>/i) ||
+					articleHtml.match(/<[^>]*class=["'][^"']*title[^"']*["'][^>]*>([^<]+)</i);
+
+				// Extract text content
+				const textMatch = articleHtml.match(/<p[^>]*>([^<]+)<\/p>/i);
+
+				// Extract link
+				const linkMatch = articleHtml.match(/<a[^>]*href=["']([^"']+)["']/i);
+
+				if (titleMatch || textMatch) {
+					result.articles.push({
+						title: titleMatch ? this.cleanText(titleMatch[1]) : null,
+						text: textMatch ? this.cleanText(textMatch[1]) : null,
+						link: linkMatch ? this.normalizeUrl(linkMatch[1], sourceUrl) : null
+					});
+				}
+			}
+
+			// Extract all images
+			const imgPattern = /<img[^>]*src=["']([^"']+)["'][^>]*>/gi;
+			const imgMatches = html.matchAll(imgPattern);
+
+			for (const match of imgMatches) {
+				const imgUrl = this.normalizeUrl(match[1], sourceUrl);
+				if (imgUrl && !imgUrl.includes('data:image')) {
+					result.images.push(imgUrl);
+				}
+			}
+
+			// Extract meaningful links (not navigation, footer, etc.)
+			const linkPattern = /<a[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi;
+			const linkMatches = html.matchAll(linkPattern);
+
+			for (const match of linkMatches) {
+				const url = match[1];
+				const linkText = this.cleanText(match[2]);
+
+				// Filter out navigation and short links
+				if (linkText.length > 10 && !url.includes('#') && !url.includes('javascript:')) {
+					const normalizedUrl = this.normalizeUrl(url, sourceUrl);
+					if (normalizedUrl) {
+						result.links.push(normalizedUrl);
+					}
+				}
+			}
+
+		} catch (error) {
+			logger.error('Error parsing HTML content:', error);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Normalize URL to absolute path
+	 */
+	private normalizeUrl(url: string, baseUrl: string): string {
+		try {
+			if (url.startsWith('http://') || url.startsWith('https://')) {
+				return url;
+			}
+			if (url.startsWith('//')) {
+				return 'https:' + url;
+			}
+			if (url.startsWith('/')) {
+				const base = new URL(baseUrl);
+				return `${base.protocol}//${base.host}${url}`;
+			}
+			return new URL(url, baseUrl).href;
+		} catch (error) {
+			return url;
 		}
 	}
 }

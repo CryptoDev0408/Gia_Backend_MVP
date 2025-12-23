@@ -5,7 +5,7 @@
 
 export interface ScrapedPostData {
 	platformPostId: string;
-	platform: 'TWITTER' | 'INSTAGRAM' | 'TIKTOK' | 'PINTEREST';
+	platform: 'ELLE' | 'HARPER' | 'ETC';
 	author: string;
 	authorHandle: string;
 	text: string;

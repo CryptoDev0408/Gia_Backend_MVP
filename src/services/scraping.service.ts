@@ -1,4 +1,5 @@
 import { ElleSource } from '../sources/elle.source';
+import { HarperSource } from '../sources/harper.source';
 import { ScrapingConditions, ScrapedPostData } from '../sources/base.source';
 import { logger } from '../utils/logger';
 
@@ -206,8 +207,17 @@ export class ScrapingService {
 			await elleSource.cleanup();
 			logger.info(`Scraped ${ellePosts.length} posts from Elle`);
 
-			// Add more scrapers here as they are implemented
-			// Example: Gucci, Vogue, etc.
+			// Scrape Harper's Bazaar
+			logger.info('Scraping Harper\'s Bazaar...');
+			const harperSource = new HarperSource();
+			await harperSource.initialize();
+			const harperPosts = await harperSource.scrape({
+				keywords: ['fashion', 'style', 'runway', 'collection', 'designer', 'couture', 'luxury'],
+				maxResults: 50,
+			});
+			allPosts.push(...harperPosts);
+			await harperSource.cleanup();
+			logger.info(`Scraped ${harperPosts.length} posts from Harper's Bazaar`);
 
 			logger.info(`Total posts scraped from all sources: ${allPosts.length}`);
 			return allPosts;
