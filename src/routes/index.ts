@@ -13,7 +13,7 @@ router.use('/posts', postsRoutes);
 router.use('/admin', adminRoutes);
 
 // Health check
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
 	res.json({
 		success: true,
 		data: {

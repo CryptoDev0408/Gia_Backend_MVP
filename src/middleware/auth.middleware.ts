@@ -33,7 +33,7 @@ export const authenticate = async (
 		const payload = AuthService.verifyAccessToken(token);
 
 		req.user = payload;
-		next();
+		return next();
 	} catch (error: any) {
 		logger.warn('Authentication failed:', error.message);
 		return res.status(401).json({
@@ -48,7 +48,7 @@ export const authenticate = async (
  */
 export const optionalAuth = async (
 	req: AuthRequest,
-	res: Response,
+	_res: Response,
 	next: NextFunction
 ) => {
 	try {
@@ -60,10 +60,10 @@ export const optionalAuth = async (
 			req.user = payload;
 		}
 
-		next();
+		return next();
 	} catch (error) {
 		// Continue without authentication
-		next();
+		return next();
 	}
 };
 
@@ -82,5 +82,5 @@ export const requireAdmin = (
 		});
 	}
 
-	next();
+	return next();
 };

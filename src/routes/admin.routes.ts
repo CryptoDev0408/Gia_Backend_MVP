@@ -16,7 +16,7 @@ router.use(requireAdmin);
  */
 router.post(
 	'/scrape/trigger',
-	asyncHandler(async (req: AuthRequest, res: any) => {
+	asyncHandler(async (_req: AuthRequest, res: any) => {
 		const result = await CronScheduler.runManual();
 
 		res.json({
@@ -32,7 +32,7 @@ router.post(
  */
 router.get(
 	'/stats',
-	asyncHandler(async (req: AuthRequest, res: any) => {
+	asyncHandler(async (_req: AuthRequest, res: any) => {
 		const [
 			totalUsers,
 			totalPosts,
@@ -71,7 +71,7 @@ router.get(
  */
 router.get(
 	'/jobs',
-	asyncHandler(async (req: AuthRequest, res: any) => {
+	asyncHandler(async (_req: AuthRequest, res: any) => {
 		const jobs = await prisma.scrapingJob.findMany({
 			orderBy: { createdAt: 'desc' },
 			take: 50,

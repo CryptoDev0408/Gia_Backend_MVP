@@ -7,7 +7,6 @@
 		"dev": "nodemon src/server.ts",
 		"build": "tsc",
 		"start": "node dist/server.js",
-		"test:gucci": "ts-node src/tests/test-gucci.ts",
 		"test:elle": "ts-node src/tests/test-elle.ts",
 		"prisma:generate": "prisma generate",
 		"prisma:migrate": "prisma migrate dev",

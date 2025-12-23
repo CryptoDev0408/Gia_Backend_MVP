@@ -182,17 +182,19 @@ export class AuthService {
 	 * Generate JWT access and refresh tokens
 	 */
 	static generateTokens(userId: string, payload: Partial<JWTPayload>) {
+		const jwtPayload = { userId, ...payload } as JWTPayload;
 		const accessToken = jwt.sign(
-			{ userId, ...payload } as JWTPayload,
+			jwtPayload,
 			config.jwt.secret,
 			{ expiresIn: config.jwt.expiresIn }
-		);
+		) as string;
 
+		const refreshPayload = { userId };
 		const refreshToken = jwt.sign(
-			{ userId },
+			refreshPayload,
 			config.jwt.refreshSecret,
 			{ expiresIn: config.jwt.refreshExpiresIn }
-		);
+		) as string;
 
 		return { accessToken, refreshToken };
 	}

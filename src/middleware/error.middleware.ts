@@ -8,7 +8,7 @@ export const errorHandler = (
 	err: any,
 	req: Request,
 	res: Response,
-	next: NextFunction
+	_next: NextFunction
 ) => {
 	logger.error('Error:', {
 		message: err.message,
@@ -30,7 +30,7 @@ export const errorHandler = (
 /**
  * 404 handler
  */
-export const notFoundHandler = (req: Request, res: Response) => {
+export const notFoundHandler = (_req: Request, res: Response) => {
 	res.status(404).json({
 		success: false,
 		error: 'Route not found',

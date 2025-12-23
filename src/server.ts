@@ -35,7 +35,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Request logging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
 	logger.info(`${req.method} ${req.path}`, {
 		ip: req.ip,
 		userAgent: req.get('user-agent'),
@@ -47,7 +47,7 @@ app.use((req, res, next) => {
 // ROUTES
 // ============================================
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
 	res.json({
 		success: true,
 		message: 'GIA AI Blog Backend API',
@@ -79,7 +79,7 @@ app.listen(PORT, () => {
 
 	// Start scraping service (async)
 	if (config.scraping.enabled) {
-		logger.info('📸 Starting Instagram scraping service (async)');
+		logger.info('📸 Starting fashion scraping service (async)');
 		scrapingService.start().catch(error => {
 			logger.error('Failed to start scraping service:', error);
 		});

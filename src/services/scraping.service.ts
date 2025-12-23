@@ -1,20 +1,20 @@
-import { InstagramFashionSource } from '../sources/instagram.source';
+import { ElleSource } from '../sources/elle.source';
 import { ScrapingConditions, ScrapedPostData } from '../sources/base.source';
 import { logger } from '../utils/logger';
 
 /**
  * Scraping Service
- * Manages the lifecycle of Instagram fashion scraping
+ * Manages the lifecycle of fashion website scraping
  * Starts async when server runs and can be stopped/restarted
  */
 export class ScrapingService {
-	private instagramSource: InstagramFashionSource;
+	private elleSource: ElleSource;
 	private isRunning: boolean = false;
 	private scrapingInterval: NodeJS.Timeout | null = null;
 	private defaultConditions: ScrapingConditions;
 
 	constructor() {
-		this.instagramSource = new InstagramFashionSource();
+		this.elleSource = new ElleSource();
 
 		// Default fashion-focused scraping conditions
 		this.defaultConditions = {
@@ -47,9 +47,6 @@ export class ScrapingService {
 				interval: `${intervalMinutes} minutes`,
 				conditions: scrapingConditions
 			});
-
-			// Initialize the Instagram scraper
-			await this.instagramSource.initialize();
 
 			// Run first scrape immediately (async)
 			this.runScrapeAsync(scrapingConditions);
@@ -87,7 +84,7 @@ export class ScrapingService {
 			}
 
 			// Cleanup scraper
-			await this.instagramSource.cleanup();
+			await this.elleSource.cleanup();
 
 			this.isRunning = false;
 			logger.info('Scraping service stopped successfully');
@@ -125,10 +122,10 @@ export class ScrapingService {
 			logger.info('Running manual scrape...', { conditions: scrapingConditions });
 
 			// Ensure scraper is initialized
-			await this.instagramSource.initialize();
+			await this.elleSource.initialize();
 
-			// Scrape Instagram
-			const posts = await this.instagramSource.scrape(scrapingConditions);
+			// Scrape Elle
+			const posts = await this.elleSource.scrape(scrapingConditions);
 
 			logger.info(`Manual scrape completed. Found ${posts.length} posts`);
 
@@ -145,8 +142,8 @@ export class ScrapingService {
 	 */
 	async testConnection(): Promise<boolean> {
 		try {
-			await this.instagramSource.initialize();
-			return await this.instagramSource.testConnection();
+			await this.elleSource.initialize();
+			return await this.elleSource.testConnection();
 		} catch (error) {
 			logger.error('Connection test failed:', error);
 			return false;
@@ -185,6 +182,40 @@ export class ScrapingService {
 				url: posts[0].sourceUrl
 			} : null
 		});
+	}
+
+	/**
+	 * Static method to scrape all sources
+	 * Used by cron scheduler
+	 */
+	static async scrapeAll(): Promise<ScrapedPostData[]> {
+		logger.info('Running scrapeAll - scraping all fashion sources');
+
+		const allPosts: ScrapedPostData[] = [];
+
+		try {
+			// Scrape Elle
+			logger.info('Scraping Elle...');
+			const elleSource = new ElleSource();
+			await elleSource.initialize();
+			const ellePosts = await elleSource.scrape({
+				keywords: ['fashion', 'style', 'runway', 'collection', 'designer'],
+				maxResults: 50,
+			});
+			allPosts.push(...ellePosts);
+			await elleSource.cleanup();
+			logger.info(`Scraped ${ellePosts.length} posts from Elle`);
+
+			// Add more scrapers here as they are implemented
+			// Example: Gucci, Vogue, etc.
+
+			logger.info(`Total posts scraped from all sources: ${allPosts.length}`);
+			return allPosts;
+
+		} catch (error) {
+			logger.error('Error in scrapeAll:', error);
+			throw error;
+		}
 	}
 }
 

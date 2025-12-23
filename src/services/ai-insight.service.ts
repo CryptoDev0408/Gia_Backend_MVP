@@ -20,7 +20,7 @@ export class AIInsightService {
 			where: {
 				OR: [
 					{ aiInsight: 'AI insight pending...' },
-					{ aiInsight: null },
+					{ aiInsight: undefined },
 				],
 			},
 			include: {

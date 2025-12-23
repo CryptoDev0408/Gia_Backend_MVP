@@ -1,4 +1,6 @@
 import dotenv from 'dotenv';
+import type { StringValue } from 'ms';
+
 dotenv.config();
 
 export const config = {
@@ -13,9 +15,9 @@ export const config = {
 	// JWT
 	jwt: {
 		secret: process.env.JWT_SECRET!,
-		expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+		expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as StringValue,
 		refreshSecret: process.env.JWT_REFRESH_SECRET!,
-		refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
+		refreshExpiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '30d') as StringValue,
 	},
 
 	// OpenAI
@@ -31,11 +33,6 @@ export const config = {
 		bearerToken: process.env.TWITTER_BEARER_TOKEN,
 		accessToken: process.env.TWITTER_ACCESS_TOKEN,
 		accessSecret: process.env.TWITTER_ACCESS_SECRET,
-	},
-
-	instagram: {
-		username: process.env.INSTAGRAM_USERNAME,
-		password: process.env.INSTAGRAM_PASSWORD,
 	},
 
 	// Scraping
