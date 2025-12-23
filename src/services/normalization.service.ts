@@ -147,6 +147,52 @@ export class NormalizationService {
 	}
 
 	/**
+	 * Save normalized data to blogs table in MySQL
+	 */
+	static async saveToBlogsTable(data: NormalizedFashionPost[]): Promise<void> {
+		try {
+			logger.info(`Saving ${data.length} normalized posts to blogs table...`);
+
+			for (const post of data) {
+				try {
+					// Check if blog with same link already exists
+					const existing = await prisma.$queryRaw<any[]>`
+						SELECT id FROM blogs WHERE link = ${post.Link} LIMIT 1
+					`;
+
+					if (existing.length > 0) {
+						logger.debug(`Blog already exists: ${post.Link}`);
+						continue;
+					}
+
+					// Insert new blog
+					await prisma.$executeRaw`
+						INSERT INTO blogs (platform, title, description, ai_insight, image, link, approved)
+						VALUES (
+							${post.Platform},
+							${post.Title},
+							${post.Description},
+							${post.AI_Insight},
+							${post.Image},
+							${post.Link},
+							0
+						)
+					`;
+
+					logger.debug(`Saved blog: ${post.Title}`);
+				} catch (error) {
+					logger.error(`Failed to save blog "${post.Title}":`, error);
+				}
+			}
+
+			logger.info(`✅ Successfully saved ${data.length} blogs to database`);
+		} catch (error) {
+			logger.error('Failed to save blogs to database:', error);
+			throw error;
+		}
+	}
+
+	/**
 	 * Process all unprocessed scraped posts (Legacy Database Method)
 	 */
 	static async processAll() {

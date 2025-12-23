@@ -84,6 +84,11 @@ async function testElleWorkflow() {
 		const filepath = await NormalizationService.saveNormalizedData(normalizedData, 'ELLE');
 		console.log(`✅ Saved to: ${filepath}\n`);
 
+		// Save to blogs table in MySQL
+		console.log('💾 Saving normalized data to MySQL blogs table...');
+		await NormalizationService.saveToBlogsTable(normalizedData);
+		console.log(`✅ Saved to blogs table\n`);
+
 		// Display normalized results
 		console.log('📋 NORMALIZED RESULTS (First 2 articles):');
 		console.log('----------------------------------------------------------');
