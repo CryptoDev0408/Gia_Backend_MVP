@@ -7,6 +7,7 @@ Description: [Clean, concise description of the article content, 1-2 sentences]
 Link: [Source URL of the article]
 Platform: [Platform name: ELLE, HARPER, or ETC]
 Hashtags: [Generate 5-7 relevant fashion hashtags based on the content, including trending fashion terms]
+Keywords : [Generate relevant fashion kewords based on this content, the first keyword will be the platform, from the second keyword you should fetch the relevant keyword from this article, Generate 3-5 keywords]
 
 This is the Scraped Content. Just make it standardized and normalized into a clean JSON format.
 
@@ -21,6 +22,7 @@ Example format:
     "Description": "Explore the top runway trends from Paris Fashion Week Spring 2025.",
     "Link": "https://example.com/article",
     "Platform": "ELLE",
-    "Hashtags": ["#FashionWeek2025", "#SustainableFashion", "#RunwayTrends", "#SpringFashion", "#ParisFashionWeek", "#LuxuryFashion", "#EcoFashion"]
+    "Hashtags": ["#FashionWeek2025", "#SustainableFashion", "#RunwayTrends", "#SpringFashion", "#ParisFashionWeek", "#LuxuryFashion", "#EcoFashion"],
+    "Keywords" : ["example", "luxury", "couture", ...]
   }
 ]
