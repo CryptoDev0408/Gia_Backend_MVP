@@ -285,8 +285,11 @@ export class ElleSource extends BaseSocialMediaSource {
 			while ((sectionMatch = sectionRegex.exec(htmlContent)) !== null && index < 100) {
 				const sectionContent = sectionMatch[1];
 
-				// Extract article URL
-				const urlMatch = sectionContent.match(/href=["']([^"']*?)["']/);
+				// Extract article URL from the main article link (data-theme-key="custom-item")
+				// This ensures we get the actual article URL, not category/section URLs
+				const urlMatch = sectionContent.match(/<a[^>]*data-theme-key="custom-item"[^>]*href=["']([^"']*?)["']/i) ||
+					sectionContent.match(/<a[^>]*href=["']([^"']*?)["'][^>]*data-theme-key="custom-item"/i) ||
+					sectionContent.match(/href=["']([^"']*?)["']/);
 				if (!urlMatch) continue;
 
 				let url = urlMatch[1];

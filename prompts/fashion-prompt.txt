@@ -1,0 +1,26 @@
+Create new fashion-oriented articles and give me the JSON format filling these fields from inputs:
+
+Title: [Extract or refine the article title]
+AI_Insight: [Generate a 2-3 sentence insight about why this fashion trend/article is significant, what makes it noteworthy, and its potential impact on the fashion industry]
+Image: [Primary image URL from the article]
+Description: [Clean, concise description of the article content, 1-2 sentences]
+Link: [Source URL of the article]
+Platform: [Platform name: ELLE, HARPER, or ETC]
+Hashtags: [Generate 5-7 relevant fashion hashtags based on the content, including trending fashion terms]
+
+This is the Scraped Content. Just make it standardized and normalized into a clean JSON format.
+
+Return ONLY valid JSON array format. No markdown, no explanation, just the JSON.
+
+Example format:
+[
+  {
+    "Title": "Spring 2025 Runway Trends",
+    "AI_Insight": "This collection marks a significant shift towards sustainable luxury, featuring bio-fabricated materials that challenge traditional haute couture norms. The emphasis on earth tones and organic textures signals the industry's response to climate-conscious consumers.",
+    "Image": "https://example.com/image.jpg",
+    "Description": "Explore the top runway trends from Paris Fashion Week Spring 2025.",
+    "Link": "https://example.com/article",
+    "Platform": "ELLE",
+    "Hashtags": ["#FashionWeek2025", "#SustainableFashion", "#RunwayTrends", "#SpringFashion", "#ParisFashionWeek", "#LuxuryFashion", "#EcoFashion"]
+  }
+]

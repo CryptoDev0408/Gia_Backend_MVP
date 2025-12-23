@@ -7,6 +7,7 @@
 		"dev": "nodemon src/server.ts",
 		"build": "tsc",
 		"start": "node dist/server.js",
+		"elle": "ts-node src/tests/test-elle.ts",
 		"test:elle": "ts-node src/tests/test-elle.ts",
 		"test:harper": "ts-node src/tests/test-harper.ts",
 		"test:etc": "ts-node src/tests/test-etc.ts",

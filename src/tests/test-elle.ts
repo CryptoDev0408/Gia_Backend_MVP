@@ -1,20 +1,25 @@
 /**
- * Elle Fashion Scraper Test
- * Tests Elle.com fashion page scraping
+ * Elle Fashion Scraper + Normalization Test
+ * Tests complete workflow: Scraping → AI Normalization
  */
 import { ElleSource } from '../sources/elle.source';
+import { NormalizationService } from '../services/normalization.service';
 import { ScrapingConditions } from '../sources/base.source';
 
-async function testElleScraper() {
+async function testElleWorkflow() {
 	console.log('\n==========================================================');
-	console.log('🧪 TESTING ELLE FASHION SCRAPER');
+	console.log('🧪 TESTING ELLE FASHION COMPLETE WORKFLOW');
+	console.log('   1. Scraping Elle.com fashion articles');
+	console.log('   2. AI Normalization with OpenAI');
 	console.log('==========================================================\n');
 
 	const scraper = new ElleSource();
 
 	try {
-		// Test 1: Connection Test
-		console.log('📡 Test 1: Testing Elle fashion connection...');
+		// ============================================
+		// STEP 1: SCRAPING
+		// ============================================
+		console.log('📡 STEP 1: Testing Elle fashion connection...');
 		await scraper.initialize();
 		const isConnected = await scraper.testConnection();
 
@@ -24,113 +29,102 @@ async function testElleScraper() {
 			console.log('⚠️  Connection test failed, but continuing with scraping attempt...\n');
 		}
 
-		// Test 2: Scrape with default fashion keywords
-		console.log('📰 Test 2: Scraping Elle fashion with default keywords...');
+		console.log('📰 STEP 1: Scraping Elle fashion articles...');
 		console.log('⏳ This may take 1-2 minutes...\n');
 
-		const posts = await scraper.scrape({
-			maxResults: 20,
+		const scrapingConditions: ScrapingConditions = {
+			keywords: ['fashion', 'style', 'runway', 'designer', 'collection', 'trend'],
+			maxResults: 10,
 			pageTimeout: 90000
-		});
+		};
+
+		const posts = await scraper.scrape(scrapingConditions);
 
 		console.log('==========================================================');
 		console.log(`✅ SCRAPING COMPLETED - Found ${posts.length} articles`);
 		console.log('==========================================================\n');
 
-		if (posts.length > 0) {
-			// Display summary
-			console.log('📊 SCRAPING SUMMARY:');
-			console.log('----------------------------------------------------------');
-			console.log(`Total Articles: ${posts.length}`);
-			console.log(`Source: Elle Fashion`);
-			console.log(`Platform: ${posts[0].platform}`);
-			console.log('');
-
-			// Display first 5 articles
-			console.log('📰 ARTICLES FOUND:');
-			console.log('----------------------------------------------------------');
-
-			const articlesToShow = posts.slice(0, 5);
-
-			articlesToShow.forEach((post, index) => {
-				console.log(`\n${index + 1}. ${post.rawContent?.title || 'Untitled'}`);
-				console.log(`   ✍️  Author: ${post.author}`);
-				console.log(`   📅 Posted: ${post.postedAt.toISOString()}`);
-				console.log(`   🔗 URL: ${post.sourceUrl}`);
-				console.log(`   📝 Description: ${post.rawContent?.description || 'No description'}`);
-				console.log(`   🖼️  Images: ${post.mediaUrls?.length || 0}`);
-			});
-
-			console.log('\n');
-
-			// Test 3: Scrape with specific keywords
-			console.log('📰 Test 3: Scraping with specific fashion keywords...');
-			console.log('   Keywords: designer, runway, launch');
-			console.log('   Max Results: 10');
-			console.log('⏳ This may take 1 minute...\n');
-
-			const customConditions: ScrapingConditions = {
-				keywords: ['designer', 'runway', 'launch', 'collection', 'style'],
-				maxResults: 10,
-				pageTimeout: 90000,
-			};
-
-			const customPosts = await scraper.scrape(customConditions);
-
-			console.log('==========================================================');
-			console.log(`✅ CUSTOM SCRAPING COMPLETED - Found ${customPosts.length} articles`);
-			console.log('==========================================================\n');
-
-			if (customPosts.length > 0) {
-				console.log('📋 SAMPLE ARTICLE DATA (First Article):');
-				console.log('----------------------------------------------------------');
-				const samplePost = customPosts[0];
-				console.log(JSON.stringify({
-					platformPostId: samplePost.platformPostId,
-					platform: samplePost.platform,
-					title: samplePost.rawContent?.title,
-					author: samplePost.author,
-					description: samplePost.rawContent?.description,
-					postedAt: samplePost.postedAt,
-					sourceUrl: samplePost.sourceUrl,
-					mediaCount: samplePost.mediaUrls?.length || 0,
-				}, null, 2));
-			} else {
-				console.log('ℹ️  No articles found with the specified keywords');
-			}
-
-			console.log('\n');
-			console.log('📁 HTML Output saved to: Backend/Output/output_elle.html');
-			console.log('📁 JSON Output saved to: Backend/Output/output_elle.json');
-
-		} else {
-			console.log('⚠️  No articles found. This could be due to:');
-			console.log('   - The page structure may have changed');
-			console.log('   - Content is loaded dynamically via JavaScript');
-			console.log('   - Network issues or rate limiting');
-			console.log('   - The selectors need to be updated');
-			console.log('\n   Check the output_elle.html file to see the raw HTML');
+		if (posts.length === 0) {
+			console.log('❌ No articles found. Cannot proceed with normalization.');
+			console.log('   Please check your internet connection and try again.\n');
+			await scraper.cleanup();
+			process.exit(1);
 		}
 
-	} catch (error: any) {
-		console.error('\n❌ ERROR:', error.message);
-		console.error('Stack:', error.stack);
-	} finally {
+		// Display scraped articles
+		console.log('📊 SCRAPED ARTICLES:');
+		console.log('----------------------------------------------------------');
+		posts.slice(0, 3).forEach((post, index) => {
+			console.log(`\n${index + 1}. ${post.rawContent?.title || 'Untitled'}`);
+			console.log(`   📅 Posted: ${post.postedAt.toISOString()}`);
+			console.log(`   🔗 URL: ${post.sourceUrl}`);
+			console.log(`   🖼️  Images: ${post.mediaUrls?.length || 0}`);
+		});
+
+		console.log('\n');
+
+		// ============================================
+		// STEP 2: AI NORMALIZATION
+		// ============================================
+		console.log('==========================================================');
+		console.log('🤖 STEP 2: AI NORMALIZATION WITH OPENAI');
+		console.log('==========================================================\n');
+
+		console.log('⏳ Sending data to OpenAI for normalization...');
+		console.log('   This may take 30-60 seconds...\n');
+
+		const normalizedData = await NormalizationService.normalizeWithAI(posts, 'ELLE');
+
+		console.log('==========================================================');
+		console.log(`✅ AI NORMALIZATION COMPLETED - ${normalizedData.length} posts normalized`);
+		console.log('==========================================================\n');
+
+		// Save normalized data
+		console.log('💾 Saving normalized data to file...');
+		const filepath = await NormalizationService.saveNormalizedData(normalizedData, 'ELLE');
+		console.log(`✅ Saved to: ${filepath}\n`);
+
+		// Display normalized results
+		console.log('📋 NORMALIZED RESULTS (First 2 articles):');
+		console.log('----------------------------------------------------------');
+
+		normalizedData.slice(0, 2).forEach((post, index) => {
+			console.log(`\n${index + 1}. ${post.Title}`);
+			console.log(`   💡 AI Insight: ${post.AI_Insight}`);
+			console.log(`   📝 Description: ${post.Description}`);
+			console.log(`   🔗 Link: ${post.Link}`);
+			console.log(`   🏷️  Hashtags: ${post.Hashtags.join(', ')}`);
+			console.log(`   🖼️  Image: ${post.Image ? 'Available' : 'None'}`);
+		});
+
+		console.log('\n');
+		console.log('==========================================================');
+		console.log('✅ COMPLETE WORKFLOW FINISHED SUCCESSFULLY');
+		console.log('==========================================================');
+		console.log(`\n📊 Summary:`);
+		console.log(`   • Scraped: ${posts.length} articles`);
+		console.log(`   • Normalized: ${normalizedData.length} articles`);
+		console.log(`   • Output: ${filepath}`);
+		console.log('');
+
 		// Cleanup
-		console.log('\n🧹 Cleaning up...');
 		await scraper.cleanup();
-		console.log('✅ Cleanup complete');
-		console.log('\n==========================================================\n');
+
+	} catch (error: any) {
+		console.error('\n❌ ERROR OCCURRED:');
+		console.error('----------------------------------------------------------');
+		console.error(error.message);
+		console.error('');
+
+		if (error.message?.includes('API key')) {
+			console.error('💡 HINT: Make sure you have set OPENAI_API_KEY in your .env file');
+			console.error('   Example: OPENAI_API_KEY=sk-your-actual-key-here\n');
+		}
+
+		await scraper.cleanup();
+		process.exit(1);
 	}
 }
 
 // Run the test
-testElleScraper()
-	.then(() => {
-		console.log('Test completed successfully');
-		process.exit(0);
-	})
-	.catch((error) => {
-		console.error('Test failed:', error);
-		process.exit(1);
-	});
+testElleWorkflow();

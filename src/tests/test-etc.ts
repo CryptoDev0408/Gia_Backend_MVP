@@ -25,8 +25,7 @@ async function testEtcScraper() {
 		logger.info('\n--- Test 3: Scrape Fashion URLs ---');
 		const posts = await etcSource.scrape({
 			urls: [
-				'https://www.vogue.com/fashion',
-				'https://wwd.com/fashion-news/'
+				'https://fashionista.com/fashion-week'
 			],
 			maxResults: 10,
 		});

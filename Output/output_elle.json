@@ -1,72 +1,59 @@
 {
   "source": "Elle Fashion",
   "url": "https://www.elle.com/fashion/",
-  "scrapedAt": "2025-12-23T06:34:49.888Z",
-  "totalItems": 5,
+  "scrapedAt": "2025-12-23T12:02:56.598Z",
+  "totalItems": 4,
   "items": [
     {
-      "id": "elle_1766471689887_0",
+      "id": "elle_1766491376597_0",
       "title": "Inside the Art of Runway Soundtracks",
       "description": "",
       "author": "Elle Editorial",
       "text": "Inside the Art of Runway Soundtracks",
-      "url": "https://www.elle.com/fashion-week/",
+      "url": "https://www.elle.com/fashion/a69194024/spring-summer-2026-runway-sound-producers/",
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/mm-press-pack-3x2-4320-x-28804-6904c2ba94614.jpg?crop=0.668xw:1.00xh;0.170xw,0&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-23T06:34:49.887Z",
+      "postedAt": "2025-12-23T12:02:56.597Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766471689887_1",
+      "id": "elle_1766491376597_1",
       "title": "The Next Biggest Runway Trend? Showing in the U.S.",
       "description": "",
       "author": "Elle Editorial",
       "text": "The Next Biggest Runway Trend? Showing in the U.S.",
-      "url": "https://www.elle.com/fashion/trend-reports/",
+      "url": "https://www.elle.com/fashion/trend-reports/a69610245/brands-showing-in-us-trend-explained/",
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/chanel-metiers-dart-2026-copyright-chanel-5-rotated-hd-6930676bd986c.jpg?crop=1.00xw:0.668xh;0,0.131xh&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-23T06:34:49.887Z",
+      "postedAt": "2025-12-23T12:02:56.597Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766471689887_2",
-      "title": "The Holiday Outfits, Recreated",
-      "description": "",
-      "author": "Sarah Maberry",
-      "text": "The Holiday Outfits, Recreated",
-      "url": "https://www.elle.com/fashion/shopping/",
-      "images": [
-        "https://hips.hearstapps.com/hmg-prod/images/cover-image-25-6942ea14b1c45.png?crop=0.503xw:1.00xh;0.114xw,0&amp;resize=360:*"
-      ],
-      "postedAt": "2025-12-23T06:34:49.887Z",
-      "blockType": "article"
-    },
-    {
-      "id": "elle_1766471689887_3",
+      "id": "elle_1766491376597_2",
       "title": "7 Travel Must-Haves for Chic Coast-to-Coast Style",
       "description": "",
       "author": "Daisy Melamed Sanders",
       "text": "7 Travel Must-Haves for Chic Coast-to-Coast Style",
-      "url": "https://www.elle.com/fashion/personal-style/",
+      "url": "https://www.elle.com/fashion/personal-style/g68853180/ralph-lauren-luxury-travel-style/",
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/elle-lede-68ff88027031c.jpeg?crop=0.6666666666666666xw:1xh;center,top&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-23T06:34:49.887Z",
+      "postedAt": "2025-12-23T12:02:56.597Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766471689887_4",
+      "id": "elle_1766491376597_3",
       "title": "This Coach Bag Is the It Bag of 2025—Shop the Styles Selling Out Fast",
       "description": "The Tabby is officially the most in demand bag of the season and these are the versions worth buying now.",
       "author": "Laura Tarafa",
       "text": "This Coach Bag Is the It Bag of 2025—Shop the Styles Selling Out Fast: The Tabby is officially the most in demand bag of the season and these are the versions worth buying now.",
-      "url": "https://www.elle.com/fashion/accessories/",
+      "url": "https://www.elle.com/fashion/accessories/a69411323/coach-tabby-26-trend/",
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/tabbybag26lead-6916347913229.jpg?crop=1xw:0.5xh;center,top"
       ],
-      "postedAt": "2025-12-23T06:34:49.887Z",
+      "postedAt": "2025-12-23T12:02:56.597Z",
       "blockType": "article"
     }
   ]
