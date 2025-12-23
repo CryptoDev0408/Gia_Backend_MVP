@@ -1,11 +1,11 @@
 {
   "source": "Elle Fashion",
   "url": "https://www.elle.com/fashion/",
-  "scrapedAt": "2025-12-23T13:05:35.903Z",
-  "totalItems": 4,
+  "scrapedAt": "2025-12-23T14:55:35.978Z",
+  "totalItems": 5,
   "items": [
     {
-      "id": "elle_1766495135899_0",
+      "id": "elle_1766501735977_0",
       "title": "Inside the Art of Runway Soundtracks",
       "description": "",
       "author": "Elle Editorial",
@@ -14,11 +14,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/mm-press-pack-3x2-4320-x-28804-6904c2ba94614.jpg?crop=0.668xw:1.00xh;0.170xw,0&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-23T13:05:35.899Z",
+      "postedAt": "2025-12-23T14:55:35.977Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766495135900_1",
+      "id": "elle_1766501735977_1",
       "title": "The Next Biggest Runway Trend? Showing in the U.S.",
       "description": "",
       "author": "Elle Editorial",
@@ -27,11 +27,24 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/chanel-metiers-dart-2026-copyright-chanel-5-rotated-hd-6930676bd986c.jpg?crop=1.00xw:0.668xh;0,0.131xh&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-23T13:05:35.900Z",
+      "postedAt": "2025-12-23T14:55:35.977Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766495135900_2",
+      "id": "elle_1766501735977_2",
+      "title": "The Holiday Outfits, Recreated",
+      "description": "",
+      "author": "Sarah Maberry",
+      "text": "The Holiday Outfits, Recreated",
+      "url": "https://www.elle.com/fashion/shopping/",
+      "images": [
+        "https://hips.hearstapps.com/hmg-prod/images/cover-image-25-6942ea14b1c45.png?crop=0.503xw:1.00xh;0.114xw,0&amp;resize=360:*"
+      ],
+      "postedAt": "2025-12-23T14:55:35.977Z",
+      "blockType": "article"
+    },
+    {
+      "id": "elle_1766501735978_3",
       "title": "7 Travel Must-Haves for Chic Coast-to-Coast Style",
       "description": "",
       "author": "Daisy Melamed Sanders",
@@ -40,11 +53,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/elle-lede-68ff88027031c.jpeg?crop=0.6666666666666666xw:1xh;center,top&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-23T13:05:35.900Z",
+      "postedAt": "2025-12-23T14:55:35.978Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766495135900_3",
+      "id": "elle_1766501735978_4",
       "title": "This Coach Bag Is the It Bag of 2025—Shop the Styles Selling Out Fast",
       "description": "The Tabby is officially the most in demand bag of the season and these are the versions worth buying now.",
       "author": "Laura Tarafa",
@@ -53,7 +66,7 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/tabbybag26lead-6916347913229.jpg?crop=1xw:0.5xh;center,top"
       ],
-      "postedAt": "2025-12-23T13:05:35.900Z",
+      "postedAt": "2025-12-23T14:55:35.978Z",
       "blockType": "article"
     }
   ]

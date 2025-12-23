@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import routes from './routes';
 import { CronScheduler } from './jobs/cron.scheduler';
 import { scrapingService } from './services/scraping.service';
+import { initializeDatabase } from './database/client';
 
 const app: Application = express();
 
@@ -72,29 +73,49 @@ app.use(errorHandler);
 
 const PORT = config.port;
 
-app.listen(PORT, () => {
-	logger.info(`🚀 Server running on port ${PORT}`);
-	logger.info(`📝 Environment: ${config.nodeEnv}`);
-	logger.info(`🌐 API URL: http://localhost:${PORT}/api/${config.apiVersion}`);
+// Initialize database before starting server
+async function startServer() {
+	try {
+		// Initialize database (test connection + create tables if needed)
+		await initializeDatabase();
 
-	// Start scraping service (async)
-	if (config.scraping.enabled) {
-		logger.info('📸 Starting fashion scraping service (async)');
-		scrapingService.start().catch(error => {
-			logger.error('Failed to start scraping service:', error);
+		// Start Express server
+		app.listen(PORT, () => {
+			logger.info(`🚀 Server running on port ${PORT}`);
+			logger.info(`📝 Environment: ${config.nodeEnv}`);
+			logger.info(`🌐 API URL: http://localhost:${PORT}/api/${config.apiVersion}`);
+
+			// AUTOMATIC SCRAPING PAUSED - Use manual trigger via API endpoint to start scraping
+			// Waiting for manual scraping logic implementation
+
+			// // Start scraping service (async)
+			// if (config.scraping.enabled) {
+			// 	logger.info('📸 Starting fashion scraping service (async)');
+			// 	scrapingService.start().catch(error => {
+			// 		logger.error('Failed to start scraping service:', error);
+			// 	});
+			// } else {
+			// 	logger.info('📸 Scraping service disabled');
+			// }
+
+			// // Start cron jobs
+			// if (config.scraping.enabled) {
+			// 	logger.info('⏰ Starting cron scheduler');
+			// 	CronScheduler.start();
+			// } else {
+			// 	logger.info('⏰ Cron scheduler disabled');
+			// }
+
+			logger.info('📸 Automatic scraping paused - waiting for manual start trigger');
 		});
-	} else {
-		logger.info('📸 Scraping service disabled');
+	} catch (error) {
+		logger.error('❌ Failed to start server:', error);
+		process.exit(1);
 	}
+}
 
-	// Start cron jobs
-	if (config.scraping.enabled) {
-		logger.info('⏰ Starting cron scheduler');
-		CronScheduler.start();
-	} else {
-		logger.info('⏰ Cron scheduler disabled');
-	}
-});
+// Start the server
+startServer();
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
