@@ -375,12 +375,13 @@ export class HarperSource extends BaseSocialMediaSource {
 
 		// Pattern 1: Extract Harper's Bazaar specific format with data-theme-key attributes
 		// <a data-theme-key="custom-item" ... href="/fashion/...">
-		const articlePattern = /<a[^>]*data-theme-key="custom-item"[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+		// Match both orders: href before data-theme-key OR data-theme-key before href
+		const articlePattern = /<a[^>]*(?:data-theme-key="custom-item"[^>]*href=["']([^"']+)["']|href=["']([^"']+)["'][^>]*data-theme-key="custom-item")[^>]*>([\s\S]*?)<\/a>/gi;
 		const articleMatches = html.matchAll(articlePattern);
 
 		for (const match of articleMatches) {
-			const url = this.normalizeUrl(match[1]);
-			const articleHtml = match[2];
+			const url = this.normalizeUrl(match[1] || match[2]);
+			const articleHtml = match[3];
 
 			// Extract title from data-theme-key="custom-item-title-text"
 			const titleMatch = articleHtml.match(/<span[^>]*data-theme-key="custom-item-title-text"[^>]*>([^<]+)<\/span>/i);

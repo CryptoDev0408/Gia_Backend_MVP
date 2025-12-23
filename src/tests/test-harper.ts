@@ -1,98 +1,130 @@
-import { HarperSource } from '../sources/harper.source';
-import { logger } from '../utils/logger';
-
 /**
- * Test Harper's Bazaar Scraper
- * Tests the scraping functionality for Harper's Bazaar fashion section
+ * Harper's Bazaar Fashion Scraper + Normalization Test
+ * Tests complete workflow: Scraping → AI Normalization
  */
-async function testHarperScraper() {
-	logger.info('=== Starting Harper\'s Bazaar Scraper Test ===');
+import { HarperSource } from '../sources/harper.source';
+import { NormalizationService } from '../services/normalization.service';
+import { ScrapingConditions } from '../sources/base.source';
 
-	const harperSource = new HarperSource();
+async function testHarperWorkflow() {
+	console.log('\n==========================================================');
+	console.log('🧪 TESTING HARPER\'S BAZAAR FASHION COMPLETE WORKFLOW');
+	console.log('   1. Scraping HarpersBazaar.com fashion articles');
+	console.log('   2. AI Normalization with OpenAI');
+	console.log('==========================================================\n');
+
+	const scraper = new HarperSource();
 
 	try {
-		// Test 1: Connection Test
-		logger.info('\n--- Test 1: Connection Test ---');
-		const connectionOk = await harperSource.testConnection();
-		logger.info(`Connection test result: ${connectionOk ? 'SUCCESS ✓' : 'FAILED ✗'}`);
+		// ============================================
+		// STEP 1: SCRAPING
+		// ============================================
+		console.log('📡 STEP 1: Testing Harper\'s Bazaar fashion connection...');
+		await scraper.initialize();
+		const isConnected = await scraper.testConnection();
 
-		if (!connectionOk) {
-			logger.error('Connection test failed. Stopping tests.');
-			return;
+		if (isConnected) {
+			console.log('✅ Connection successful!\n');
+		} else {
+			console.log('⚠️  Connection test failed, but continuing with scraping attempt...\n');
 		}
 
-		// Test 2: Initialize Scraper
-		logger.info('\n--- Test 2: Initialize Scraper ---');
-		await harperSource.initialize();
-		logger.info('Scraper initialized successfully ✓');
+		console.log('📰 STEP 1: Scraping Harper\'s Bazaar fashion articles...');
+		console.log('⏳ This may take 1-2 minutes...\n');
 
-		// Test 3: Scrape with Fashion Keywords
-		logger.info('\n--- Test 3: Scrape Fashion Content ---');
-		const posts = await harperSource.scrape({
-			keywords: [
-				'fashion',
-				'style',
-				'designer',
-				'collection',
-				'runway',
-				'trend',
-				'couture',
-				'luxury'
-			],
-			maxResults: 20,
+		const scrapingConditions: ScrapingConditions = {
+			keywords: ['fashion', 'style', 'runway', 'designer', 'collection', 'trend', 'couture', 'luxury'],
+			maxResults: 10,
+			pageTimeout: 90000
+		};
+
+		const posts = await scraper.scrape(scrapingConditions);
+
+		console.log('==========================================================');
+		console.log(`✅ SCRAPING COMPLETED - Found ${posts.length} articles`);
+		console.log('==========================================================\n');
+
+		if (posts.length === 0) {
+			console.log('❌ No articles found. Cannot proceed with normalization.');
+			console.log('   Please check your internet connection and try again.\n');
+			await scraper.cleanup();
+			process.exit(1);
+		}
+
+		// Display scraped articles
+		console.log('📊 SCRAPED ARTICLES:');
+		console.log('----------------------------------------------------------');
+		posts.slice(0, 3).forEach((post, index) => {
+			console.log(`\n${index + 1}. ${post.rawContent?.title || 'Untitled'}`);
+			console.log(`   📅 Posted: ${post.postedAt.toISOString()}`);
+			console.log(`   🔗 URL: ${post.sourceUrl}`);
+			console.log(`   🖼️  Images: ${post.mediaUrls?.length || 0}`);
 		});
 
-		logger.info(`\n=== Scraping Results ===`);
-		logger.info(`Total posts found: ${posts.length}`);
+		console.log('\n');
 
-		if (posts.length > 0) {
-			logger.info(`\n--- Sample Posts ---`);
-			posts.slice(0, 5).forEach((post, index) => {
-				logger.info(`\nPost ${index + 1}:`);
-				logger.info(`  Platform: ${post.platform}`);
-				logger.info(`  Author: ${post.author}`);
-				logger.info(`  Text: ${post.text?.substring(0, 100)}...`);
-				logger.info(`  URL: ${post.sourceUrl}`);
-				logger.info(`  Media URLs: ${post.mediaUrls?.length || 0} images`);
-				logger.info(`  Likes: ${post.likes}`);
-				logger.info(`  Posted: ${post.postedAt}`);
-			});
+		// ============================================
+		// STEP 2: AI NORMALIZATION
+		// ============================================
+		console.log('==========================================================');
+		console.log('🤖 STEP 2: AI NORMALIZATION WITH OPENAI');
+		console.log('==========================================================\n');
 
-			logger.info(`\n--- Statistics ---`);
-			const withImages = posts.filter(p => p.mediaUrls && p.mediaUrls.length > 0).length;
-			const withText = posts.filter(p => p.text && p.text.length > 0).length;
+		console.log('⏳ Sending data to OpenAI for normalization...');
+		console.log('   This may take 30-60 seconds...\n');
 
-			logger.info(`Posts with images: ${withImages}/${posts.length} (${Math.round(withImages / posts.length * 100)}%)`);
-			logger.info(`Posts with text: ${withText}/${posts.length} (${Math.round(withText / posts.length * 100)}%)`);
+		const normalizedData = await NormalizationService.normalizeWithAI(posts, 'HARPER');
+
+		console.log('==========================================================');
+		console.log(`✅ AI NORMALIZATION COMPLETED - ${normalizedData.length} posts normalized`);
+		console.log('==========================================================\n');
+
+		// Save normalized data
+		console.log('💾 Saving normalized data to file...');
+		const filepath = await NormalizationService.saveNormalizedData(normalizedData, 'HARPER');
+		console.log(`✅ Saved to: ${filepath}\n`);
+
+		// Display normalized results
+		console.log('📋 NORMALIZED RESULTS (First 2 articles):');
+		console.log('----------------------------------------------------------');
+
+		normalizedData.slice(0, 2).forEach((post, index) => {
+			console.log(`\n${index + 1}. ${post.Title}`);
+			console.log(`   💡 AI Insight: ${post.AI_Insight}`);
+			console.log(`   📝 Description: ${post.Description}`);
+			console.log(`   🔗 Link: ${post.Link}`);
+			console.log(`   🏷️  Hashtags: ${post.Hashtags.join(', ')}`);
+			console.log(`   🖼️  Image: ${post.Image ? 'Available' : 'None'}`);
+		});
+
+		console.log('\n');
+		console.log('==========================================================');
+		console.log('✅ COMPLETE WORKFLOW FINISHED SUCCESSFULLY');
+		console.log('==========================================================');
+		console.log(`\n📊 Summary:`);
+		console.log(`   • Scraped: ${posts.length} articles`);
+		console.log(`   • Normalized: ${normalizedData.length} articles`);
+		console.log(`   • Output: ${filepath}`);
+		console.log('');
+
+		// Cleanup
+		await scraper.cleanup();
+
+	} catch (error: any) {
+		console.error('\n❌ ERROR OCCURRED:');
+		console.error('----------------------------------------------------------');
+		console.error(error.message);
+		console.error('');
+
+		if (error.message?.includes('API key')) {
+			console.error('💡 HINT: Make sure you have set OPENAI_API_KEY in your .env file');
+			console.error('   Example: OPENAI_API_KEY=sk-your-actual-key-here\n');
 		}
 
-		// Test 4: Cleanup
-		logger.info('\n--- Test 4: Cleanup ---');
-		await harperSource.cleanup();
-		logger.info('Scraper cleaned up successfully ✓');
-
-		logger.info('\n=== All Tests Completed Successfully ✓ ===');
-
-	} catch (error) {
-		logger.error('Test failed:', error);
-		throw error;
-	} finally {
-		// Ensure cleanup happens
-		try {
-			await harperSource.cleanup();
-		} catch (e) {
-			// Ignore cleanup errors
-		}
+		await scraper.cleanup();
+		process.exit(1);
 	}
 }
 
 // Run the test
-testHarperScraper()
-	.then(() => {
-		logger.info('\n✓ Test suite completed');
-		process.exit(0);
-	})
-	.catch((error) => {
-		logger.error('\n✗ Test suite failed:', error);
-		process.exit(1);
-	});
+testHarperWorkflow();
