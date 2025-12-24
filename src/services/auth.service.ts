@@ -8,7 +8,7 @@ import { logger } from '../utils/logger';
 const SALT_ROUNDS = 10;
 
 export interface JWTPayload {
-	userId: string;
+	userId: number;
 	walletAddress?: string;
 	email?: string;
 	role: string;
@@ -181,7 +181,7 @@ export class AuthService {
 	/**
 	 * Generate JWT access and refresh tokens
 	 */
-	static generateTokens(userId: string, payload: Partial<JWTPayload>) {
+	static generateTokens(userId: number, payload: Partial<JWTPayload>) {
 		const jwtPayload = { userId, ...payload } as JWTPayload;
 		const accessToken = jwt.sign(
 			jwtPayload,
@@ -213,9 +213,9 @@ export class AuthService {
 	/**
 	 * Verify JWT refresh token
 	 */
-	static verifyRefreshToken(token: string): { userId: string } {
+	static verifyRefreshToken(token: string): { userId: number } {
 		try {
-			return jwt.verify(token, config.jwt.refreshSecret) as { userId: string };
+			return jwt.verify(token, config.jwt.refreshSecret) as { userId: number };
 		} catch (error) {
 			throw new Error('Invalid or expired refresh token');
 		}

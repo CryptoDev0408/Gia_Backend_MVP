@@ -11,6 +11,7 @@ const router = Router();
 /**
  * GET /api/v1/blogs
  * Get all approved blogs (published)
+ * Query params: page, limit, platform, includeUnapproved (for testing)
  */
 router.get(
 	'/',
@@ -18,29 +19,35 @@ router.get(
 		const page = parseInt(req.query.page as string) || 1;
 		const limit = parseInt(req.query.limit as string) || 20;
 		const platform = req.query.platform as string;
+		const includeUnapproved = req.query.includeUnapproved === 'true';
 		const offset = (page - 1) * limit;
 
-		// Build where clause
-		const where: any = { approved: 1 };
+		// Build where clause - include unapproved for testing
+		let whereClause = includeUnapproved ? 'WHERE 1=1' : 'WHERE approved = 1';
+		const params: any[] = [];
+
 		if (platform) {
-			where.platform = platform;
+			whereClause += ` AND platform = ?`;
+			params.push(platform);
 		}
 
 		// Get blogs with pagination
 		const blogs = await prisma.$queryRawUnsafe<any[]>(
 			`SELECT * FROM blogs 
-			WHERE approved = ? ${platform ? 'AND platform = ?' : ''}
+			${whereClause}
 			ORDER BY createdAt DESC 
 			LIMIT ? OFFSET ?`,
-			...(platform ? [1, platform, limit, offset] : [1, limit, offset])
+			...params, limit, offset
 		);
 
 		// Get total count
 		const countResult = await prisma.$queryRawUnsafe<any[]>(
-			`SELECT COUNT(*) as total FROM blogs WHERE approved = ? ${platform ? 'AND platform = ?' : ''}`,
-			...(platform ? [1, platform] : [1])
+			`SELECT COUNT(*) as total FROM blogs ${whereClause}`,
+			...params
 		);
 		const total = Number(countResult[0].total);
+
+		logger.info(`📚 Fetching blogs: page=${page}, limit=${limit}, platform=${platform || 'all'}, includeUnapproved=${includeUnapproved}, found=${blogs.length}`);
 
 		res.json({
 			success: true,
@@ -109,16 +116,19 @@ router.post(
 				pageTimeout: 90000
 			});
 			totalScraped += ellePosts.length;
+			logger.info(`✅ Elle: Scraped ${ellePosts.length} posts`);
 			await elleSource.cleanup();
 
 			if (ellePosts.length > 0) {
-				logger.info('🤖 Normalizing Elle posts...');
+				logger.info('🤖 Normalizing Elle posts with AI...');
 				const elleNormalized = await NormalizationService.normalizeWithAI(ellePosts, 'ELLE');
 				totalNormalized += elleNormalized.length;
+				logger.info(`✅ Elle: Normalized ${elleNormalized.length} posts`);
 
 				logger.info('💾 Saving Elle posts to database...');
-				await NormalizationService.saveToBlogsTable(elleNormalized);
-				totalSaved += elleNormalized.length;
+				const elleSaved = await NormalizationService.saveToBlogsTable(elleNormalized);
+				totalSaved += elleSaved;
+				logger.info(`✅ Elle: Saved ${elleSaved} posts to database`);
 			}
 
 			// Scrape Harper
@@ -131,24 +141,27 @@ router.post(
 				pageTimeout: 90000
 			});
 			totalScraped += harperPosts.length;
+			logger.info(`✅ Harper: Scraped ${harperPosts.length} posts`);
 			await harperSource.cleanup();
 
 			if (harperPosts.length > 0) {
-				logger.info('🤖 Normalizing Harper posts...');
+				logger.info('🤖 Normalizing Harper posts with AI...');
 				const harperNormalized = await NormalizationService.normalizeWithAI(harperPosts, 'HARPER');
 				totalNormalized += harperNormalized.length;
+				logger.info(`✅ Harper: Normalized ${harperNormalized.length} posts`);
 
 				logger.info('💾 Saving Harper posts to database...');
-				await NormalizationService.saveToBlogsTable(harperNormalized);
-				totalSaved += harperNormalized.length;
+				const harperSaved = await NormalizationService.saveToBlogsTable(harperNormalized);
+				totalSaved += harperSaved;
+				logger.info(`✅ Harper: Saved ${harperSaved} posts to database`);
 			}
 
-			logger.info('✅ Fashion scraping completed successfully');
+			logger.info(`✅ Fashion scraping completed: ${totalScraped} scraped, ${totalNormalized} normalized, ${totalSaved} saved`);
 
 			res.json({
 				success: true,
 				data: {
-					message: 'Fashion scraping completed',
+					message: 'Fashion scraping completed successfully',
 					scraped: totalScraped,
 					normalized: totalNormalized,
 					saved: totalSaved,
@@ -161,6 +174,52 @@ router.post(
 				error: error.message || 'Scraping failed',
 			});
 		}
+	})
+);
+
+/**
+ * PATCH /api/v1/blogs/:id/approve
+ * Approve a blog for publishing
+ */
+router.patch(
+	'/:id/approve',
+	asyncHandler(async (req: any, res: any) => {
+		const { id } = req.params;
+
+		await prisma.$executeRawUnsafe(
+			`UPDATE blogs SET approved = 1 WHERE id = ?`,
+			parseInt(id)
+		);
+
+		logger.info(`✅ Blog ${id} approved`);
+
+		res.json({
+			success: true,
+			data: { message: 'Blog approved successfully' },
+		});
+	})
+);
+
+/**
+ * PATCH /api/v1/blogs/approve-all
+ * Approve all unapproved blogs (for testing)
+ */
+router.patch(
+	'/approve-all',
+	asyncHandler(async (_req: any, res: any) => {
+		const result = await prisma.$executeRawUnsafe(
+			`UPDATE blogs SET approved = 1 WHERE approved = 0`
+		);
+
+		logger.info(`✅ Approved all blogs (affected rows: ${result})`);
+
+		res.json({
+			success: true,
+			data: {
+				message: 'All blogs approved successfully',
+				affected: result
+			},
+		});
 	})
 );
 

@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 
 export interface AuthRequest extends Request {
 	user?: {
-		userId: string;
+		userId: number;
 		walletAddress?: string;
 		email?: string;
 		role: string;

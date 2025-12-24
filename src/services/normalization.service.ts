@@ -148,46 +148,64 @@ export class NormalizationService {
 
 	/**
 	 * Save normalized data to blogs table in MySQL
+	 * Returns the count of actually saved records
 	 */
-	static async saveToBlogsTable(data: NormalizedFashionPost[]): Promise<void> {
+	static async saveToBlogsTable(data: NormalizedFashionPost[]): Promise<number> {
 		try {
-			logger.info(`Saving ${data.length} normalized posts to blogs table...`);
+			logger.info(`Attempting to save ${data.length} normalized posts to blogs table...`);
+
+			let savedCount = 0;
+			let skippedCount = 0;
+			let errorCount = 0;
 
 			for (const post of data) {
 				try {
-					// Check if blog with same link already exists
+					// Validate required fields
+					if (!post.Title || !post.Link) {
+						logger.warn(`⚠️  Skipping invalid post: missing title or link`);
+						errorCount++;
+						continue;
+					}
+
+					// Check if blog with same link already exists (duplicate prevention)
 					const existing = await prisma.$queryRaw<any[]>`
 						SELECT id FROM blogs WHERE link = ${post.Link} LIMIT 1
 					`;
 
 					if (existing.length > 0) {
-						logger.debug(`Blog already exists: ${post.Link}`);
+						logger.info(`⏭️  Skipped duplicate: "${post.Title}" (URL already exists)`);
+						skippedCount++;
 						continue;
 					}
 
 					// Insert new blog
-					await prisma.$executeRaw`
+					const result = await prisma.$executeRaw`
 						INSERT INTO blogs (platform, title, description, ai_insight, image, link, approved)
 						VALUES (
-							${post.Platform},
+							${post.Platform || 'UNKNOWN'},
 							${post.Title},
-							${post.Description},
-							${post.AI_Insight},
-							${post.Image},
+							${post.Description || ''},
+							${post.AI_Insight || ''},
+							${post.Image || ''},
 							${post.Link},
 							0
 						)
 					`;
 
-					logger.debug(`Saved blog: ${post.Title}`);
-				} catch (error) {
-					logger.error(`Failed to save blog "${post.Title}":`, error);
+					if (result > 0) {
+						savedCount++;
+						logger.info(`✅ Saved: "${post.Title}" (${post.Platform})`);
+					}
+				} catch (error: any) {
+					errorCount++;
+					logger.error(`❌ Failed to save "${post.Title}":`, error.message);
 				}
 			}
 
-			logger.info(`✅ Successfully saved ${data.length} blogs to database`);
+			logger.info(`📊 Save Summary: ${savedCount} saved, ${skippedCount} skipped (duplicates), ${errorCount} errors`);
+			return savedCount;
 		} catch (error) {
-			logger.error('Failed to save blogs to database:', error);
+			logger.error('❌ Critical error in saveToBlogsTable:', error);
 			throw error;
 		}
 	}

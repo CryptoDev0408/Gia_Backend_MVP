@@ -41,7 +41,7 @@ export async function initializeDatabase() {
 					// Create users table with raw SQL
 					await prisma.$executeRawUnsafe(`
 						CREATE TABLE IF NOT EXISTS users (
-							id VARCHAR(191) NOT NULL PRIMARY KEY,
+							id INT AUTO_INCREMENT PRIMARY KEY,
 							createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 							updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 							walletAddress VARCHAR(191) NULL UNIQUE,
