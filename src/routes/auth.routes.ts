@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { AuthService } from '../services/auth.service';
-import { asyncHandler } from '../middleware/error.middleware';
+import { asyncHandler, validateRequest } from '../middleware/error.middleware';
 import prisma from '../database/client';
 
 const router = Router();
@@ -60,9 +60,10 @@ router.post(
  */
 router.post(
 	'/register',
-	body('email').isEmail(),
-	body('password').isLength({ min: 6 }),
+	body('email').isEmail().withMessage('Valid email is required'),
+	body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 	body('username').optional().isString(),
+	validateRequest,
 	asyncHandler(async (req: any, res: any) => {
 		const { email, password, username } = req.body;
 
@@ -90,8 +91,9 @@ router.post(
  */
 router.post(
 	'/login',
-	body('email').isEmail(),
-	body('password').isString(),
+	body('email').isEmail().withMessage('Valid email is required'),
+	body('password').isString().notEmpty().withMessage('Password is required'),
+	validateRequest,
 	asyncHandler(async (req: any, res: any) => {
 		const { email, password } = req.body;
 

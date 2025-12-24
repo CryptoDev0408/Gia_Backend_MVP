@@ -17,8 +17,29 @@ const app: Application = express();
 
 // CORS
 app.use(cors({
-	origin: config.cors.origin,
+	origin: (origin, callback) => {
+		// Allow requests with no origin (mobile apps, Postman, etc.)
+		if (!origin) return callback(null, true);
+
+		// Allowed origins
+		const allowedOrigins = [
+			'http://localhost:5004',
+			'http://localhost:5173', // Vite dev server
+			'http://localhost:3000',
+			'https://giafashion.io',
+			'https://www.giafashion.io',
+			...config.cors.origin
+		];
+
+		if (allowedOrigins.includes(origin)) {
+			callback(null, true);
+		} else {
+			callback(null, true); // Allow all in development
+		}
+	},
 	credentials: true,
+	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Body parsing

@@ -108,7 +108,7 @@ export async function initializeDatabase() {
 		// Verify tables are ready
 		const userCount = await prisma.user.count();
 		const blogsCount = await prisma.$queryRaw<any[]>`SELECT COUNT(*) as count FROM blogs`;
-		logger.info(`✅ Database ready. Users: ${userCount}, Blogs: ${blogsCount[0].count}`);
+		logger.info(`✅ Database ready. Users: ${userCount}, Blogs: ${Number(blogsCount[0].count)}`);
 
 		return true;
 	} catch (error) {

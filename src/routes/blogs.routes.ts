@@ -1,7 +1,5 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/error.middleware';
-import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth.middleware';
-import { CronScheduler } from '../jobs/cron.scheduler';
 import { ElleSource } from '../sources/elle.source';
 import { HarperSource } from '../sources/harper.source';
 import { NormalizationService } from '../services/normalization.service';
@@ -10,33 +8,90 @@ import prisma from '../database/client';
 
 const router = Router();
 
-// All admin routes require authentication and admin role
-router.use(authenticate);
-router.use(requireAdmin);
-
 /**
- * POST /api/v1/admin/scrape/trigger
- * Manually trigger scraping pipeline
+ * GET /api/v1/blogs
+ * Get all approved blogs (published)
  */
-router.post(
-	'/scrape/trigger',
-	asyncHandler(async (_req: AuthRequest, res: any) => {
-		const result = await CronScheduler.runManual();
+router.get(
+	'/',
+	asyncHandler(async (req: any, res: any) => {
+		const page = parseInt(req.query.page as string) || 1;
+		const limit = parseInt(req.query.limit as string) || 20;
+		const platform = req.query.platform as string;
+		const offset = (page - 1) * limit;
+
+		// Build where clause
+		const where: any = { approved: 1 };
+		if (platform) {
+			where.platform = platform;
+		}
+
+		// Get blogs with pagination
+		const blogs = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT * FROM blogs 
+			WHERE approved = ? ${platform ? 'AND platform = ?' : ''}
+			ORDER BY createdAt DESC 
+			LIMIT ? OFFSET ?`,
+			...(platform ? [1, platform, limit, offset] : [1, limit, offset])
+		);
+
+		// Get total count
+		const countResult = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as total FROM blogs WHERE approved = ? ${platform ? 'AND platform = ?' : ''}`,
+			...(platform ? [1, platform] : [1])
+		);
+		const total = Number(countResult[0].total);
 
 		res.json({
 			success: true,
-			data: result,
+			data: {
+				blogs,
+				pagination: {
+					page,
+					limit,
+					total,
+					totalPages: Math.ceil(total / limit),
+				},
+			},
 		});
 	})
 );
 
 /**
- * POST /api/v1/admin/scrape/fashion
- * Scrape Elle and Harper fashion blogs
+ * GET /api/v1/blogs/:id
+ * Get a single blog by ID
+ */
+router.get(
+	'/:id',
+	asyncHandler(async (req: any, res: any) => {
+		const { id } = req.params;
+
+		const blogs = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT * FROM blogs WHERE id = ? LIMIT 1`,
+			parseInt(id)
+		);
+
+		if (blogs.length === 0) {
+			return res.status(404).json({
+				success: false,
+				error: 'Blog not found',
+			});
+		}
+
+		res.json({
+			success: true,
+			data: blogs[0],
+		});
+	})
+);
+
+/**
+ * POST /api/v1/blogs/scrape
+ * Trigger scraping workflow for Elle and Harper
  */
 router.post(
-	'/scrape/fashion',
-	asyncHandler(async (_req: AuthRequest, res: any) => {
+	'/scrape',
+	asyncHandler(async (_req: any, res: any) => {
 		logger.info('🚀 Starting fashion scraping workflow (Elle + Harper)');
 
 		try {
@@ -106,84 +161,6 @@ router.post(
 				error: error.message || 'Scraping failed',
 			});
 		}
-	})
-);
-
-/**
- * GET /api/v1/admin/stats
- * Get system statistics
- */
-router.get(
-	'/stats',
-	asyncHandler(async (_req: AuthRequest, res: any) => {
-		const [
-			totalUsers,
-			totalPosts,
-			totalClusters,
-			activeClusters,
-			recentJobs,
-		] = await Promise.all([
-			prisma.user.count(),
-			prisma.normalizedPost.count(),
-			prisma.trendCluster.count(),
-			prisma.trendCluster.count({ where: { isActive: true } }),
-			prisma.scrapingJob.findMany({
-				orderBy: { createdAt: 'desc' },
-				take: 10,
-			}),
-		]);
-
-		res.json({
-			success: true,
-			data: {
-				users: totalUsers,
-				posts: totalPosts,
-				clusters: {
-					total: totalClusters,
-					active: activeClusters,
-				},
-				recentJobs,
-			},
-		});
-	})
-);
-
-/**
- * GET /api/v1/admin/jobs
- * Get scraping job history
- */
-router.get(
-	'/jobs',
-	asyncHandler(async (_req: AuthRequest, res: any) => {
-		const jobs = await prisma.scrapingJob.findMany({
-			orderBy: { createdAt: 'desc' },
-			take: 50,
-		});
-
-		res.json({
-			success: true,
-			data: jobs,
-		});
-	})
-);
-
-/**
- * DELETE /api/v1/admin/clusters/:id
- * Delete a cluster
- */
-router.delete(
-	'/clusters/:id',
-	asyncHandler(async (req: AuthRequest, res: any) => {
-		const { id } = req.params;
-
-		await prisma.trendCluster.delete({
-			where: { id },
-		});
-
-		res.json({
-			success: true,
-			data: { deleted: true },
-		});
 	})
 );
 
