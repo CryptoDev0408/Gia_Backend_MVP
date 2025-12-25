@@ -56,13 +56,22 @@ export const optionalAuth = async (
 
 		if (authHeader && authHeader.startsWith('Bearer ')) {
 			const token = authHeader.substring(7);
-			const payload = AuthService.verifyAccessToken(token);
-			req.user = payload;
+			try {
+				const payload = AuthService.verifyAccessToken(token);
+				req.user = payload;
+				logger.info(`optionalAuth: Token verified for user ${payload.userId}, role: ${payload.role}`);
+			} catch (tokenError: any) {
+				logger.warn(`optionalAuth: Token verification failed - ${tokenError.message}`);
+				// Continue without authentication - don't throw
+			}
+		} else {
+			logger.info('optionalAuth: No authorization header provided, continuing as guest');
 		}
 
 		return next();
-	} catch (error) {
-		// Continue without authentication
+	} catch (error: any) {
+		logger.error(`optionalAuth: Unexpected error - ${error.message}`);
+		// Continue without authentication even on unexpected errors
 		return next();
 	}
 };

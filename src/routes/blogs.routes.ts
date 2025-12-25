@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/error.middleware';
+import { authenticate, requireAdmin, optionalAuth, AuthRequest } from '../middleware/auth.middleware';
 import { ElleSource } from '../sources/elle.source';
 import { HarperSource } from '../sources/harper.source';
 import { NormalizationService } from '../services/normalization.service';
@@ -12,18 +13,31 @@ const router = Router();
  * GET /api/v1/blogs
  * Get all approved blogs (published)
  * Query params: page, limit, platform, includeUnapproved (for testing)
+ * For regular users: only approved blogs
+ * For admins: can see unapproved blogs with includeUnapproved param
  */
 router.get(
 	'/',
-	asyncHandler(async (req: any, res: any) => {
+	optionalAuth,
+	asyncHandler(async (req: AuthRequest, res: any) => {
 		const page = parseInt(req.query.page as string) || 1;
 		const limit = parseInt(req.query.limit as string) || 20;
 		const platform = req.query.platform as string;
 		const includeUnapproved = req.query.includeUnapproved === 'true';
 		const offset = (page - 1) * limit;
 
-		// Build where clause - include unapproved for testing
-		let whereClause = includeUnapproved ? 'WHERE 1=1' : 'WHERE approved = 1';
+		// Build where clause - admins can see unapproved, regular users/guests only see approved
+		const isAdmin = req.user?.role === 'ADMIN';
+		const isAuthenticated = !!req.user;
+
+		// Log authentication status for debugging
+		logger.info(`📚 Blog request - isAuthenticated: ${isAuthenticated}, isAdmin: ${isAdmin}, role: ${req.user?.role || 'none'}, includeUnapproved: ${includeUnapproved}`);
+
+		// Only show unapproved blogs if user is admin AND explicitly requested
+		let whereClause = (isAdmin) ? 'WHERE 1=1' : 'WHERE approved = 1';
+
+		logger.info(`📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚 ${whereClause}`);
+
 		const params: any[] = [];
 
 		if (platform) {
@@ -179,11 +193,13 @@ router.post(
 
 /**
  * PATCH /api/v1/blogs/:id/approve
- * Approve a blog for publishing
+ * Approve a blog for publishing (admin only)
  */
 router.patch(
 	'/:id/approve',
-	asyncHandler(async (req: any, res: any) => {
+	authenticate,
+	requireAdmin,
+	asyncHandler(async (req: AuthRequest, res: any) => {
 		const { id } = req.params;
 
 		await prisma.$executeRawUnsafe(
@@ -206,7 +222,9 @@ router.patch(
  */
 router.patch(
 	'/approve-all',
-	asyncHandler(async (_req: any, res: any) => {
+	authenticate,
+	requireAdmin,
+	asyncHandler(async (_req: AuthRequest, res: any) => {
 		const result = await prisma.$executeRawUnsafe(
 			`UPDATE blogs SET approved = 1 WHERE approved = 0`
 		);
@@ -219,6 +237,31 @@ router.patch(
 				message: 'All blogs approved successfully',
 				affected: result
 			},
+		});
+	})
+);
+
+/**
+ * DELETE /api/v1/blogs/:id
+ * Delete a blog (admin only)
+ */
+router.delete(
+	'/:id',
+	authenticate,
+	requireAdmin,
+	asyncHandler(async (req: AuthRequest, res: any) => {
+		const { id } = req.params;
+
+		await prisma.$executeRawUnsafe(
+			`DELETE FROM blogs WHERE id = ?`,
+			parseInt(id)
+		);
+
+		logger.info(`🗑️  Blog ${id} deleted by admin ${req.user?.userId}`);
+
+		res.json({
+			success: true,
+			data: { message: 'Blog deleted successfully' },
 		});
 	})
 );
