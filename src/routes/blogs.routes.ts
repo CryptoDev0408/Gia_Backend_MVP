@@ -201,17 +201,40 @@ router.patch(
 	requireAdmin,
 	asyncHandler(async (req: AuthRequest, res: any) => {
 		const { id } = req.params;
+		const blogId = parseInt(id);
 
-		await prisma.$executeRawUnsafe(
-			`UPDATE blogs SET approved = 1 WHERE id = ?`,
-			parseInt(id)
+		logger.info(`🔍 Approving blog ${blogId} by admin user ${req.user?.userId} (role: ${req.user?.role})`);
+
+		// Verify blog exists
+		const existingBlog = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT id, title, approved FROM blogs WHERE id = ? LIMIT 1`,
+			blogId
 		);
 
-		logger.info(`✅ Blog ${id} approved`);
+		if (existingBlog.length === 0) {
+			logger.warn(`❌ Blog ${blogId} not found`);
+			return res.status(404).json({
+				success: false,
+				error: 'Blog not found',
+			});
+		}
+
+		logger.info(`📝 Blog before approval: id=${existingBlog[0].id}, approved=${existingBlog[0].approved}`);
+
+		// Update blog to approved
+		await prisma.$executeRawUnsafe(
+			`UPDATE blogs SET approved = 1 WHERE id = ?`,
+			blogId
+		);
+
+		logger.info(`✅ Blog ${blogId} approved successfully by admin ${req.user?.userId}`);
 
 		res.json({
 			success: true,
-			data: { message: 'Blog approved successfully' },
+			data: {
+				message: 'Blog approved successfully',
+				blogId: blogId
+			},
 		});
 	})
 );

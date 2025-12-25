@@ -84,12 +84,16 @@ export const requireAdmin = (
 	res: Response,
 	next: NextFunction
 ) => {
+	logger.info(`requireAdmin: Checking admin access - user: ${req.user?.userId}, role: ${req.user?.role || 'none'}`);
+
 	if (!req.user || req.user.role !== 'ADMIN') {
+		logger.warn(`requireAdmin: Access denied - user: ${req.user?.userId || 'none'}, role: ${req.user?.role || 'none'}`);
 		return res.status(403).json({
 			success: false,
 			error: 'Admin access required',
 		});
 	}
 
+	logger.info(`requireAdmin: Access granted for admin user ${req.user.userId}`);
 	return next();
 };
