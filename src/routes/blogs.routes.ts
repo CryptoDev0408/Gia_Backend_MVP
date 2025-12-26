@@ -15,6 +15,7 @@ const router = Router();
  * Query params: page, limit, platform, includeUnapproved (for testing)
  * For regular users: only approved blogs
  * For admins: can see unapproved blogs with includeUnapproved param
+ * If authenticated, includes isLiked status and likesCount for each blog
  */
 router.get(
 	'/',
@@ -29,6 +30,7 @@ router.get(
 		// Build where clause - admins can see unapproved, regular users/guests only see approved
 		const isAdmin = req.user?.role === 'ADMIN';
 		const isAuthenticated = !!req.user;
+		const userId = req.user?.userId;
 
 		// Log authentication status for debugging
 		logger.info(`📚 Blog request - isAuthenticated: ${isAuthenticated}, isAdmin: ${isAdmin}, role: ${req.user?.role || 'none'}, includeUnapproved: ${includeUnapproved}`);
@@ -53,6 +55,59 @@ router.get(
 			LIMIT ? OFFSET ?`,
 			...params, limit, offset
 		);
+
+		// If user is authenticated, add like status and count for each blog
+		if (isAuthenticated && userId) {
+			// Get like counts for all blogs
+			const blogIds = blogs.map(b => b.id);
+
+			if (blogIds.length > 0) {
+				// Get likes count for each blog
+				const likesCountQuery = `
+					SELECT blogId, COUNT(*) as likesCount 
+					FROM blog_likes 
+					WHERE blogId IN (${blogIds.map(() => '?').join(',')})
+					GROUP BY blogId
+				`;
+				const likesCounts = await prisma.$queryRawUnsafe<any[]>(likesCountQuery, ...blogIds);
+
+				// Get user's liked blogs
+				const userLikesQuery = `
+					SELECT blogId 
+					FROM blog_likes 
+					WHERE userId = ? AND blogId IN (${blogIds.map(() => '?').join(',')})
+				`;
+				const userLikes = await prisma.$queryRawUnsafe<any[]>(userLikesQuery, userId, ...blogIds);
+				const likedBlogIds = new Set(userLikes.map((l: any) => l.blogId));
+
+				// Map likes data to blogs
+				const likesCountMap = new Map(likesCounts.map((l: any) => [l.blogId, Number(l.likesCount)]));
+
+				blogs.forEach((blog: any) => {
+					blog.likesCount = likesCountMap.get(blog.id) || 0;
+					blog.isLiked = likedBlogIds.has(blog.id);
+				});
+			}
+		} else {
+			// For non-authenticated users, add likesCount but no isLiked status
+			const blogIds = blogs.map(b => b.id);
+
+			if (blogIds.length > 0) {
+				const likesCountQuery = `
+					SELECT blogId, COUNT(*) as likesCount 
+					FROM blog_likes 
+					WHERE blogId IN (${blogIds.map(() => '?').join(',')})
+					GROUP BY blogId
+				`;
+				const likesCounts = await prisma.$queryRawUnsafe<any[]>(likesCountQuery, ...blogIds);
+				const likesCountMap = new Map(likesCounts.map((l: any) => [l.blogId, Number(l.likesCount)]));
+
+				blogs.forEach((blog: any) => {
+					blog.likesCount = likesCountMap.get(blog.id) || 0;
+					blog.isLiked = false;
+				});
+			}
+		}
 
 		// Get total count
 		const countResult = await prisma.$queryRawUnsafe<any[]>(
@@ -285,6 +340,136 @@ router.delete(
 		res.json({
 			success: true,
 			data: { message: 'Blog deleted successfully' },
+		});
+	})
+);
+
+/**
+ * POST /api/v1/blogs/:id/like
+ * Like a blog (authenticated users only)
+ */
+router.post(
+	'/:id/like',
+	authenticate,
+	asyncHandler(async (req: AuthRequest, res: any) => {
+		const { id } = req.params;
+		const blogId = parseInt(id);
+		const userId = req.user!.userId;
+
+		logger.info(`❤️  User ${userId} attempting to like blog ${blogId}`);
+
+		// Verify blog exists
+		const blog = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT id FROM blogs WHERE id = ? LIMIT 1`,
+			blogId
+		);
+
+		if (blog.length === 0) {
+			logger.warn(`❌ Blog ${blogId} not found`);
+			return res.status(404).json({
+				success: false,
+				error: 'Blog not found',
+			});
+		}
+
+		try {
+			// Insert like (will fail if already liked due to unique constraint)
+			await prisma.$executeRawUnsafe(
+				`INSERT INTO blog_likes (userId, blogId) VALUES (?, ?)`,
+				userId,
+				blogId
+			);
+
+			// Get updated likes count
+			const likesCount = await prisma.$queryRawUnsafe<any[]>(
+				`SELECT COUNT(*) as count FROM blog_likes WHERE blogId = ?`,
+				blogId
+			);
+
+			logger.info(`✅ User ${userId} liked blog ${blogId}. Total likes: ${likesCount[0].count}`);
+
+			res.json({
+				success: true,
+				data: {
+					message: 'Blog liked successfully',
+					likesCount: Number(likesCount[0].count),
+				},
+			});
+		} catch (error: any) {
+			// Check if already liked (duplicate key error)
+			if (error.code === 'ER_DUP_ENTRY' || error.message?.includes('Duplicate')) {
+				logger.info(`⚠️  User ${userId} already liked blog ${blogId}`);
+
+				// Get current likes count
+				const likesCount = await prisma.$queryRawUnsafe<any[]>(
+					`SELECT COUNT(*) as count FROM blog_likes WHERE blogId = ?`,
+					blogId
+				);
+
+				return res.status(400).json({
+					success: false,
+					error: 'You have already liked this blog',
+					data: { likesCount: Number(likesCount[0].count) },
+				});
+			}
+			throw error;
+		}
+	})
+);
+
+/**
+ * DELETE /api/v1/blogs/:id/like
+ * Unlike a blog (authenticated users only)
+ */
+router.delete(
+	'/:id/like',
+	authenticate,
+	asyncHandler(async (req: AuthRequest, res: any) => {
+		const { id } = req.params;
+		const blogId = parseInt(id);
+		const userId = req.user!.userId;
+
+		logger.info(`💔 User ${userId} attempting to unlike blog ${blogId}`);
+
+		// Verify blog exists
+		const blog = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT id FROM blogs WHERE id = ? LIMIT 1`,
+			blogId
+		);
+
+		if (blog.length === 0) {
+			logger.warn(`❌ Blog ${blogId} not found`);
+			return res.status(404).json({
+				success: false,
+				error: 'Blog not found',
+			});
+		}
+
+		// Delete like (idempotent - no error if not liked)
+		const result = await prisma.$executeRawUnsafe(
+			`DELETE FROM blog_likes WHERE userId = ? AND blogId = ?`,
+			userId,
+			blogId
+		);
+
+		// Get updated likes count
+		const likesCount = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as count FROM blog_likes WHERE blogId = ?`,
+			blogId
+		);
+
+		if (result === 0) {
+			logger.info(`ℹ️  User ${userId} attempted to unlike blog ${blogId} (was not liked). Total likes: ${likesCount[0].count}`);
+		} else {
+			logger.info(`✅ User ${userId} unliked blog ${blogId}. Total likes: ${likesCount[0].count}`);
+		}
+
+		res.json({
+			success: true,
+			data: {
+				message: 'Blog unliked successfully',
+				likesCount: Number(likesCount[0].count),
+			},
 		});
 	})
 );

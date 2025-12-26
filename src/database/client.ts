@@ -105,10 +105,45 @@ export async function initializeDatabase() {
 			}
 		}
 
+		// Check if blog_likes table exists
+		try {
+			await prisma.$queryRaw`SELECT 1 FROM blog_likes LIMIT 1`;
+			logger.info('✅ Blog_likes table already exists');
+		} catch (error: any) {
+			// Table doesn't exist, create blog_likes table
+			if (error.code === 'P2021' || error.message?.includes('Table') || error.message?.includes('doesn\'t exist')) {
+				logger.warn('⚠️  Blog_likes table not found. Creating blog_likes table...');
+
+				try {
+					// Create blog_likes table with raw SQL
+					await prisma.$executeRawUnsafe(`
+						CREATE TABLE IF NOT EXISTS blog_likes (
+							id INT AUTO_INCREMENT PRIMARY KEY,
+							user_id INT NOT NULL,
+							blog_id INT NOT NULL,
+							createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+							UNIQUE KEY unique_user_blog (user_id, blog_id),
+							INDEX idx_user_id (user_id),
+							INDEX idx_blog_id (blog_id),
+							FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+							FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
+						) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+					`);
+					logger.info('✅ Blog_likes table created successfully');
+				} catch (createError) {
+					logger.error('❌ Failed to create blog_likes table:', createError);
+					throw new Error('Blog_likes table creation failed');
+				}
+			} else {
+				throw error;
+			}
+		}
+
 		// Verify tables are ready
 		const userCount = await prisma.user.count();
 		const blogsCount = await prisma.$queryRaw<any[]>`SELECT COUNT(*) as count FROM blogs`;
-		logger.info(`✅ Database ready. Users: ${userCount}, Blogs: ${Number(blogsCount[0].count)}`);
+		const likesCount = await prisma.$queryRaw<any[]>`SELECT COUNT(*) as count FROM blog_likes`;
+		logger.info(`✅ Database ready. Users: ${userCount}, Blogs: ${Number(blogsCount[0].count)}, Likes: ${Number(likesCount[0].count)}`);
 
 		return true;
 	} catch (error) {
