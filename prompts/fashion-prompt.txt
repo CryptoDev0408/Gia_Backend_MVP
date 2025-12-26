@@ -1,7 +1,30 @@
 Create new fashion-oriented articles and give me the JSON format filling these fields from inputs:
 
 Title: [Extract or refine the article title]
-AI_Insight: [Generate a 2-3 sentence insight about why this fashion trend/article is significant, what makes it noteworthy, and its potential impact on the fashion industry]
+AI_Insight: ["""
+
+Write a concise fashion insight article (350 words) that turns the scraped “signal + noise” into a clear trend narrative by analyzing what is visible and stated in the source. You must examine and interpret the trend cues from the source content, including (when available) the image(s), products, clothing, silhouettes, fabrics, colors, accessories, styling details, and overall mood/setting, and connect them to the written text and keywords.
+The article must:
+Summarize the trend or idea shown in the source content.
+Explain why this trend matters right now in fashion or culture.
+Describe the visual or stylistic elements implied by the image(s) or text (garments, accessories, styling, materials, palette, fit, proportions, details).
+Add light analytical insight and context without copying or rewriting the source text.
+Rules:
+Do NOT claim ownership of the image or content.
+Do NOT rewrite or paraphrase the original text line by line.
+Do NOT invent facts, names, product SKUs, dates, runway seasons, or events not present in the source.
+If the scraped data is thin or ambiguous, say so cautiously and keep the analysis general.
+Keep an editorial, neutral tone.
+This is commentary layered on top of the source, not original reporting.
+Formatting:
+Write the article as a single narrative paragraph or two short paragraphs.
+Do not mention prompts or AI.
+Do not include bullet points.
+
+But you should makke the article as popular as possible. Users will like it.
+Make sure around 300-400 words.
+
+"""]
 Image: [Primary image URL from the article]
 Description: [Clean, concise description of the article content, 1-2 sentences]
 Link: [Source URL of the article]
@@ -10,6 +33,10 @@ Hashtags: [Generate 5-7 relevant fashion hashtags based on the content, includin
 Keywords : [Generate relevant fashion kewords based on this content, the first keyword will be the platform, from the second keyword you should fetch the relevant keyword from this article, Generate 3-5 keywords]
 
 This is the Scraped Content. Just make it standardized and normalized into a clean JSON format.
+
+For AI_Insight field you should follow these rules...
+
+
 
 Return ONLY valid JSON array format. No markdown, no explanation, just the JSON.
 
@@ -28,27 +55,3 @@ Example format:
 ]
 
 
-For AI_Insight you should follow these rules...
-
-"""
-
-Write a concise fashion insight article (250–270 words) that turns the scraped “signal + noise” into a clear trend narrative by analyzing what is visible and stated in the source. You must examine and interpret the trend cues from the source content, including (when available) the image(s), products, clothing, silhouettes, fabrics, colors, accessories, styling details, and overall mood/setting, and connect them to the written text and keywords.
-The article must:
-Summarize the trend or idea shown in the source content.
-Explain why this trend matters right now in fashion or culture.
-Describe the visual or stylistic elements implied by the image(s) or text (garments, accessories, styling, materials, palette, fit, proportions, details).
-Add light analytical insight and context without copying or rewriting the source text.
-Rules:
-Do NOT claim ownership of the image or content.
-Do NOT rewrite or paraphrase the original text line by line.
-Do NOT invent facts, names, product SKUs, dates, runway seasons, or events not present in the source.
-If the scraped data is thin or ambiguous, say so cautiously and keep the analysis general.
-Keep an editorial, neutral tone.
-This is commentary layered on top of the source, not original reporting.
-Formatting:
-Write the article as a single narrative paragraph or two short paragraphs.
-Do not mention prompts or AI.
-Do not include bullet points.
-
-
-"""

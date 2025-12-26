@@ -21,6 +21,9 @@ router.get(
 	'/',
 	optionalAuth,
 	asyncHandler(async (req: AuthRequest, res: any) => {
+
+		logger.info(`📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚`);
+
 		const page = parseInt(req.query.page as string) || 1;
 		const limit = parseInt(req.query.limit as string) || 20;
 		const platform = req.query.platform as string;
