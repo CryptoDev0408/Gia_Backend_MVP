@@ -1,9 +1,17 @@
 Create new fashion-oriented articles and give me the JSON format filling these fields from inputs:
 
+From the input, you can only create the json below for only top-2 elements.
+
+Among the input you only create it for first 2 elements, rest of the elements, you should not create the result in below format. 
+
 Title: [Extract or refine the article title]
 AI_Insight: ["""
 
-Write a concise fashion insight article (350 words) that turns the scraped “signal + noise” into a clear trend narrative by analyzing what is visible and stated in the source. You must examine and interpret the trend cues from the source content, including (when available) the image(s), products, clothing, silhouettes, fabrics, colors, accessories, styling details, and overall mood/setting, and connect them to the written text and keywords.
+! This field should be long enough. 
+You should make this field long like 250 words.
+you can regard teh title and description as the scraped source of this blog.
+
+Write a concise fashion insight article (250 words) that turns the scraped “signal + noise” into a clear trend narrative by analyzing what is visible and stated in the source. You must examine and interpret the trend cues from the source content, including (when available) the image(s), products, clothing, silhouettes, fabrics, colors, accessories, styling details, and overall mood/setting, and connect them to the written text and keywords.
 The article must:
 Summarize the trend or idea shown in the source content.
 Explain why this trend matters right now in fashion or culture.
@@ -22,7 +30,7 @@ Do not mention prompts or AI.
 Do not include bullet points.
 
 But you should makke the article as popular as possible. Users will like it.
-Make sure around 300-400 words.
+Make sure around 200-300 words.
 
 """]
 Image: [Primary image URL from the article]
@@ -54,4 +62,4 @@ Example format:
   }
 ]
 
-
+!! remember that you should generate this JSON from top-2 elements only so the return json will have 2 elements : [{},{}]

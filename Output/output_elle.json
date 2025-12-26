@@ -1,11 +1,24 @@
 {
   "source": "Elle Fashion",
   "url": "https://www.elle.com/fashion/",
-  "scrapedAt": "2025-12-26T12:53:11.677Z",
+  "scrapedAt": "2025-12-26T14:35:11.092Z",
   "totalItems": 5,
   "items": [
     {
-      "id": "elle_1766753591676_0",
+      "id": "elle_1766759711091_0",
+      "title": "The Effortlessly Chic Way Fashion Girls Are Wearing Cardigans Right Now",
+      "description": "The cozy staple can be dressed up or down with playful patterns, trendy accessories, and more",
+      "author": "Aaron Royce",
+      "text": "The Effortlessly Chic Way Fashion Girls Are Wearing Cardigans Right Now: The cozy staple can be dressed up or down with playful patterns, trendy accessories, and more",
+      "url": "https://www.elle.com/fashion/shopping/a69482765/how-to-style-a-cardigan-outfits/",
+      "images": [
+        "https://hips.hearstapps.com/hmg-prod/images/howtowearacardigan-69444a1b399a6.png?crop=1.00xw:0.367xh;0,0.0563xh"
+      ],
+      "postedAt": "2025-12-26T14:35:11.091Z",
+      "blockType": "article"
+    },
+    {
+      "id": "elle_1766759711091_1",
       "title": "Inside the Art of Runway Soundtracks",
       "description": "",
       "author": "Elle Editorial",
@@ -14,11 +27,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/mm-press-pack-3x2-4320-x-28804-6904c2ba94614.jpg?crop=0.668xw:1.00xh;0.170xw,0&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-26T12:53:11.676Z",
+      "postedAt": "2025-12-26T14:35:11.091Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766753591676_1",
+      "id": "elle_1766759711091_2",
       "title": "The Next Biggest Runway Trend? Showing in the U.S.",
       "description": "",
       "author": "Elle Editorial",
@@ -27,24 +40,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/chanel-metiers-dart-2026-copyright-chanel-5-rotated-hd-6930676bd986c.jpg?crop=1.00xw:0.668xh;0,0.131xh&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-26T12:53:11.676Z",
+      "postedAt": "2025-12-26T14:35:11.091Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766753591676_2",
-      "title": "The Most-Coveted Designer Sneakers of the Season",
-      "description": "",
-      "author": "Meg Donohue",
-      "text": "The Most-Coveted Designer Sneakers of the Season",
-      "url": "https://www.elle.com/fashion/shopping/g69635510/best-designer-sneakers-for-women/",
-      "images": [
-        "https://hips.hearstapps.com/hmg-prod/images/download-69432011db1f0.png?crop=1.00xw:0.801xh;0,0.0936xh&amp;resize=360:*"
-      ],
-      "postedAt": "2025-12-26T12:53:11.676Z",
-      "blockType": "article"
-    },
-    {
-      "id": "elle_1766753591676_3",
+      "id": "elle_1766759711091_3",
       "title": "7 Travel Must-Haves for Chic Coast-to-Coast Style",
       "description": "",
       "author": "Daisy Melamed Sanders",
@@ -53,11 +53,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/elle-lede-68ff88027031c.jpeg?crop=0.6666666666666666xw:1xh;center,top&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-26T12:53:11.676Z",
+      "postedAt": "2025-12-26T14:35:11.091Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1766753591677_4",
+      "id": "elle_1766759711091_4",
       "title": "This Coach Bag Is the It Bag of 2025—Shop the Styles Selling Out Fast",
       "description": "The Tabby is officially the most in demand bag of the season and these are the versions worth buying now.",
       "author": "Laura Tarafa",
@@ -66,7 +66,7 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/tabbybag26lead-6916347913229.jpg?crop=1xw:0.5xh;center,top"
       ],
-      "postedAt": "2025-12-26T12:53:11.677Z",
+      "postedAt": "2025-12-26T14:35:11.091Z",
       "blockType": "article"
     }
   ]
