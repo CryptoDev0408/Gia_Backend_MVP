@@ -4,6 +4,7 @@ import trendsRoutes from './trends.routes';
 import postsRoutes from './posts.routes';
 import adminRoutes from './admin.routes';
 import blogsRoutes from './blogs.routes';
+import usersRoutes from './users.routes';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use('/trends', trendsRoutes);
 router.use('/posts', postsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/blogs', blogsRoutes);
+router.use('/users', usersRoutes);
 
 // Health check
 router.get('/health', (_req, res) => {
