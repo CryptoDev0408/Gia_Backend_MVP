@@ -115,18 +115,18 @@ export async function initializeDatabase() {
 				logger.warn('⚠️  Blog_likes table not found. Creating blog_likes table...');
 
 				try {
-					// Create blog_likes table with raw SQL
+					// Create blog_likes table with raw SQL (using camelCase columns)
 					await prisma.$executeRawUnsafe(`
 						CREATE TABLE IF NOT EXISTS blog_likes (
 							id INT AUTO_INCREMENT PRIMARY KEY,
-							user_id INT NOT NULL,
-							blog_id INT NOT NULL,
+							userId INT NOT NULL,
+							blogId INT NOT NULL,
 							createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-							UNIQUE KEY unique_user_blog (user_id, blog_id),
-							INDEX idx_user_id (user_id),
-							INDEX idx_blog_id (blog_id),
-							FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-							FOREIGN KEY (blog_id) REFERENCES blogs(id) ON DELETE CASCADE
+							UNIQUE KEY unique_user_blog (userId, blogId),
+							INDEX idx_userId (userId),
+							INDEX idx_blogId (blogId),
+							FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+							FOREIGN KEY (blogId) REFERENCES blogs(id) ON DELETE CASCADE
 						) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 					`);
 					logger.info('✅ Blog_likes table created successfully');
@@ -139,11 +139,48 @@ export async function initializeDatabase() {
 			}
 		}
 
+		// Check if blog_comments table exists
+		try {
+			await prisma.$queryRaw`SELECT 1 FROM blog_comments LIMIT 1`;
+			logger.info('✅ Blog_comments table already exists');
+		} catch (error: any) {
+			// Table doesn't exist, create blog_comments table
+			if (error.code === 'P2021' || error.message?.includes('Table') || error.message?.includes('doesn\'t exist')) {
+				logger.warn('⚠️  Blog_comments table not found. Creating blog_comments table...');
+
+				try {
+					// Create blog_comments table with raw SQL (using camelCase to match blog_likes table)
+					await prisma.$executeRawUnsafe(`
+						CREATE TABLE IF NOT EXISTS blog_comments (
+							id INT AUTO_INCREMENT PRIMARY KEY,
+							userId INT NOT NULL,
+							blogId INT NOT NULL,
+							comment TEXT NOT NULL,
+							createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+							updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+							INDEX idx_userId (userId),
+							INDEX idx_blogId (blogId),
+							INDEX idx_createdAt (createdAt),
+							FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+							FOREIGN KEY (blogId) REFERENCES blogs(id) ON DELETE CASCADE
+						) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+					`);
+					logger.info('✅ Blog_comments table created successfully');
+				} catch (createError) {
+					logger.error('❌ Failed to create blog_comments table:', createError);
+					throw new Error('Blog_comments table creation failed');
+				}
+			} else {
+				throw error;
+			}
+		}
+
 		// Verify tables are ready
 		const userCount = await prisma.user.count();
 		const blogsCount = await prisma.$queryRaw<any[]>`SELECT COUNT(*) as count FROM blogs`;
 		const likesCount = await prisma.$queryRaw<any[]>`SELECT COUNT(*) as count FROM blog_likes`;
-		logger.info(`✅ Database ready. Users: ${userCount}, Blogs: ${Number(blogsCount[0].count)}, Likes: ${Number(likesCount[0].count)}`);
+		const commentsCount = await prisma.$queryRaw<any[]>`SELECT COUNT(*) as count FROM blog_comments`;
+		logger.info(`✅ Database ready. Users: ${userCount}, Blogs: ${Number(blogsCount[0].count)}, Likes: ${Number(likesCount[0].count)}, Comments: ${Number(commentsCount[0].count)}`);
 
 		return true;
 	} catch (error) {

@@ -137,6 +137,289 @@ router.get(
 );
 
 /**
+ * GET /api/v1/blogs/:id/comments
+ * Get all comments for a blog
+ */
+router.get(
+	'/:id/comments',
+	asyncHandler(async (req: any, res: any) => {
+		const { id } = req.params;
+		const blogId = parseInt(id);
+
+		logger.info(`💬 [GET COMMENTS] Request received for blog ${blogId}`);
+		logger.info(`💬 [GET COMMENTS] Request params:`, req.params);
+		logger.info(`💬 [GET COMMENTS] Blog ID parsed: ${blogId}`);
+
+		try {
+			// Get comments with user information
+			logger.info(`💬 [GET COMMENTS] Executing query to fetch comments...`);
+			const comments = await prisma.$queryRawUnsafe<any[]>(
+				`SELECT 
+					bc.id,
+					bc.comment,
+					bc.createdAt,
+					bc.updatedAt,
+					u.id as userId,
+					u.username,
+					u.email
+				FROM blog_comments bc
+				JOIN users u ON bc.userId = u.id
+				WHERE bc.blogId = ?
+				ORDER BY bc.createdAt DESC`,
+				blogId
+			);
+
+			logger.info(`✅ [GET COMMENTS] Query successful. Found ${comments.length} comments`);
+
+			const response = {
+				success: true,
+				data: {
+					comments: comments.map(c => ({
+						id: Number(c.id),
+						comment: c.comment,
+						createdAt: c.createdAt,
+						updatedAt: c.updatedAt,
+						user: {
+							id: Number(c.userId),
+							username: c.username,
+							email: c.email,
+						},
+					})),
+				},
+			};
+
+			logger.info(`✅ [GET COMMENTS] Sending response with ${comments.length} comments`);
+			res.json(response);
+		} catch (error: any) {
+			logger.error(`❌ [GET COMMENTS] Error fetching comments:`, error);
+			logger.error(`❌ [GET COMMENTS] Error message:`, error.message);
+			logger.error(`❌ [GET COMMENTS] Error stack:`, error.stack);
+			throw error;
+		}
+	})
+);
+
+/**
+ * POST /api/v1/blogs/:id/comments
+ * Add a comment to a blog (authenticated users only)
+ */
+router.post(
+	'/:id/comments',
+	authenticate,
+	asyncHandler(async (req: AuthRequest, res: any) => {
+		const { id } = req.params;
+		const blogId = parseInt(id);
+		const userId = req.user!.userId;
+		const { comment } = req.body;
+
+		logger.info(`📝 [POST COMMENT] ========== NEW COMMENT REQUEST ==========`);
+		logger.info(`📝 [POST COMMENT] Blog ID: ${blogId}`);
+		logger.info(`📝 [POST COMMENT] Request params:`, req.params);
+		logger.info(`📝 [POST COMMENT] Request body:`, req.body);
+		logger.info(`📝 [POST COMMENT] Comment text: "${comment}"`);
+		logger.info(`📝 [POST COMMENT] User from token: ${userId}`);
+		logger.info(`📝 [POST COMMENT] req.user:`, req.user);
+
+		// Validate comment
+		if (!comment || typeof comment !== 'string' || comment.trim().length === 0) {
+			logger.error(`❌ [POST COMMENT] Invalid comment: empty or not a string`);
+			return res.status(400).json({
+				success: false,
+				error: 'Comment is required and must be a non-empty string',
+			});
+		}
+
+		if (comment.length > 5000) {
+			logger.error(`❌ [POST COMMENT] Comment too long: ${comment.length} characters`);
+			return res.status(400).json({
+				success: false,
+				error: 'Comment must be less than 5000 characters',
+			});
+		}
+
+		logger.info(`📝 [POST COMMENT] User ${userId} attempting to comment on blog ${blogId}`);
+
+		// Verify blog exists
+		logger.info(`📝 [POST COMMENT] Verifying blog exists...`);
+		const blog = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT id FROM blogs WHERE id = ? LIMIT 1`,
+			blogId
+		);
+		logger.info(`📝 [POST COMMENT] Blog query result:`, blog);
+
+		if (blog.length === 0) {
+			logger.error(`❌ [POST COMMENT] Blog ${blogId} not found`);
+			return res.status(404).json({
+				success: false,
+				error: 'Blog not found',
+			});
+		}
+
+		// Insert comment
+		logger.info(`📝 [POST COMMENT] Inserting comment into database...`);
+		logger.info(`📝 [POST COMMENT] Insert params: userId=${userId}, blogId=${blogId}, comment="${comment.trim()}"`);
+		const result = await prisma.$executeRawUnsafe(
+			`INSERT INTO blog_comments (userId, blogId, comment, createdAt, updatedAt) VALUES (?, ?, ?, NOW(), NOW())`,
+			userId,
+			blogId,
+			comment.trim()
+		);
+		logger.info(`✅ [POST COMMENT] Insert result:`, result);
+
+		// Get the inserted comment with user info
+		logger.info(`📝 [POST COMMENT] Fetching inserted comment...`);
+		const insertedComment = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT 
+				bc.id,
+				bc.comment,
+				bc.createdAt,
+				bc.updatedAt,
+				u.id as userId,
+				u.username,
+				u.email
+			FROM blog_comments bc
+			JOIN users u ON bc.userId = u.id
+			WHERE bc.id = LAST_INSERT_ID()
+			LIMIT 1`
+		);
+		logger.info(`✅ [POST COMMENT] Fetched comment - ID: ${insertedComment[0]?.id}`);
+
+		// Get total comments count
+		logger.info(`📝 [POST COMMENT] Counting total comments...`);
+		const commentsCount = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as count FROM blog_comments WHERE blogId = ?`,
+			blogId
+		);
+		const totalComments = Number(commentsCount[0].count);
+		logger.info(`✅ [POST COMMENT] Total comments: ${totalComments}`);
+
+		logger.info(`✅ [POST COMMENT] User ${userId} commented on blog ${blogId}. Total comments: ${totalComments}`);
+
+		const response = {
+			success: true,
+			data: {
+				comment: insertedComment[0] ? {
+					id: Number(insertedComment[0].id),
+					comment: insertedComment[0].comment,
+					createdAt: insertedComment[0].createdAt,
+					updatedAt: insertedComment[0].updatedAt,
+					user: {
+						id: Number(insertedComment[0].userId),
+						username: insertedComment[0].username,
+						email: insertedComment[0].email,
+					},
+				} : null,
+				totalComments: totalComments,
+			},
+		};
+
+		logger.info(`✅ [POST COMMENT] Sending response - comment ID: ${response.data.comment?.id}`);
+		logger.info(`📝 [POST COMMENT] ========== COMMENT REQUEST COMPLETE ==========`);
+
+		res.json(response);
+	})
+);
+
+/**
+ * DELETE /api/v1/blogs/:blogId/comments/:commentId
+ * Delete a comment (only by comment owner or admin)
+ */
+router.delete(
+	'/:blogId/comments/:commentId',
+	authenticate,
+	asyncHandler(async (req: AuthRequest, res: any) => {
+		const { blogId, commentId } = req.params;
+		const userId = req.user!.userId;
+		const isAdmin = req.user!.role === 'ADMIN';
+
+		logger.info(`🗑️ [DELETE COMMENT] ========== DELETE COMMENT REQUEST ==========`);
+		logger.info(`🗑️ [DELETE COMMENT] Blog ID: ${blogId}, Comment ID: ${commentId}`);
+		logger.info(`🗑️ [DELETE COMMENT] User ID: ${userId}, Is Admin: ${isAdmin}`);
+		logger.info(`🗑️ [DELETE COMMENT] Request params:`, req.params);
+
+		// Get the comment
+		logger.info(`🗑️ [DELETE COMMENT] Fetching comment from database...`);
+		const comment = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT userId, blogId FROM blog_comments WHERE id = ? LIMIT 1`,
+			parseInt(commentId)
+		);
+		logger.info(`🗑️ [DELETE COMMENT] Comment query result:`, comment);
+
+		if (comment.length === 0) {
+			logger.error(`❌ [DELETE COMMENT] Comment ${commentId} not found`);
+			return res.status(404).json({
+				success: false,
+				error: 'Comment not found',
+			});
+		}
+
+		// Check if user is authorized (owner or admin)
+		const isOwner = comment[0].userId === userId;
+		logger.info(`🗑️ [DELETE COMMENT] Is Owner: ${isOwner} (comment userId: ${comment[0].userId}, current userId: ${userId})`);
+		logger.info(`🗑️ [DELETE COMMENT] Authorization check: isOwner=${isOwner} || isAdmin=${isAdmin}`);
+
+		if (!isOwner && !isAdmin) {
+			logger.error(`❌ [DELETE COMMENT] User ${userId} not authorized to delete comment ${commentId}`);
+			return res.status(403).json({
+				success: false,
+				error: 'Not authorized to delete this comment',
+			});
+		}
+
+		// Delete the comment
+		logger.info(`🗑️ [DELETE COMMENT] Deleting comment ${commentId}...`);
+		const result = await prisma.$executeRawUnsafe(
+			`DELETE FROM blog_comments WHERE id = ?`,
+			parseInt(commentId)
+		);
+		logger.info(`✅ [DELETE COMMENT] Delete result:`, result);
+
+		logger.info(`✅ [DELETE COMMENT] User ${userId} deleted comment ${commentId}`);
+		logger.info(`🗑️ [DELETE COMMENT] ========== DELETE COMMENT COMPLETE ==========`);
+
+		res.json({
+			success: true,
+			data: {
+				message: 'Comment deleted successfully',
+			},
+		});
+	})
+);
+
+/**
+ * GET /api/v1/blogs/:id
+			logger.warn(`❌ User ${userId} unauthorized to delete comment ${commentId}`);
+			return res.status(403).json({
+				success: false,
+				error: 'You are not authorized to delete this comment',
+			});
+		}
+
+		// Delete comment
+		await prisma.$executeRawUnsafe(
+			`DELETE FROM blog_comments WHERE id = ?`,
+			parseInt(commentId)
+		);
+
+		// Get updated comments count
+		const commentsCount = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as count FROM blog_comments WHERE blogId = ?`,
+			parseInt(blogId)
+		);
+
+		logger.info(`✅ Comment ${commentId} deleted. Remaining comments: ${commentsCount[0].count}`);
+
+		res.json({
+			success: true,
+			data: {
+				message: 'Comment deleted successfully',
+				commentsCount: Number(commentsCount[0].count),
+			},
+		});
+	})
+);
+
+/**
  * GET /api/v1/blogs/:id
  * Get a single blog by ID
  */
