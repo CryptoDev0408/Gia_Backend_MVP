@@ -207,6 +207,13 @@ router.post(
 	'/:id/comments',
 	authenticate,
 	asyncHandler(async (req: AuthRequest, res: any) => {
+
+		console.log('==============================================');
+		console.log('📝 [POST COMMENT] New comment request received');
+		console.log('📝 [POST COMMENT] Request params:', req.params);
+		console.log('📝 [POST COMMENT] Request body:', req.body);
+		console.log('📝 [POST COMMENT] User from token:', req.user);
+		console.log('==============================================');
 		const { id } = req.params;
 		const blogId = parseInt(id);
 		const userId = req.user!.userId;
