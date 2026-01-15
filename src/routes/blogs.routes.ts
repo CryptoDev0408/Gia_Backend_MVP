@@ -10,6 +10,47 @@ import prisma from '../database/client';
 const router = Router();
 
 /**
+ * GET /api/v1/blogs/count
+ * Get total count of blogs
+ * Query params: platform, includeUnapproved (for admins)
+ * Returns total count based on filters
+ */
+router.get(
+	'/count',
+	optionalAuth,
+	asyncHandler(async (req: AuthRequest, res: any) => {
+		const platform = req.query.platform as string;
+		const includeUnapproved = req.query.includeUnapproved === 'true';
+		const isAdmin = req.user?.role === 'ADMIN';
+
+		// Build where clause
+		let whereClause = isAdmin && includeUnapproved ? 'WHERE 1=1' : 'WHERE approved = 1';
+		const params: any[] = [];
+
+		if (platform) {
+			whereClause += ` AND platform = ?`;
+			params.push(platform);
+		}
+
+		// Get total count
+		const countResult = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as total FROM blogs ${whereClause}`,
+			...params
+		);
+		const total = Number(countResult[0].total);
+
+		logger.info(`📊 Blog count request: total=${total}, platform=${platform || 'all'}, includeUnapproved=${includeUnapproved}`);
+
+		res.json({
+			success: true,
+			data: {
+				total,
+			},
+		});
+	})
+);
+
+/**
  * GET /api/v1/blogs
  * Get all approved blogs (published)
  * Query params: page, limit, platform, includeUnapproved (for testing)

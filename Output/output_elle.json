@@ -1,11 +1,11 @@
 {
   "source": "Elle Fashion",
   "url": "https://www.elle.com/fashion/",
-  "scrapedAt": "2026-01-15T05:58:22.099Z",
+  "scrapedAt": "2026-01-15T13:29:04.519Z",
   "totalItems": 3,
   "items": [
     {
-      "id": "elle_1768456702098_0",
+      "id": "elle_1768483744518_0",
       "title": "Inside the Art of Runway Soundtracks",
       "description": "",
       "author": "Elle Editorial",
@@ -14,11 +14,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/mm-press-pack-3x2-4320-x-28804-6904c2ba94614.jpg?crop=0.668xw:1.00xh;0.170xw,0&amp;resize=360:*"
       ],
-      "postedAt": "2026-01-15T05:58:22.098Z",
+      "postedAt": "2026-01-15T13:29:04.518Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1768456702098_1",
+      "id": "elle_1768483744518_1",
       "title": "How Modern Art Is Shaping the Runway",
       "description": "",
       "author": "Elle Editorial",
@@ -27,11 +27,11 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/4302d37e-24af-4590-a259-0de57b74d8bb.jpg?crop=0.6656xw:1xh;center,top&amp;resize=360:*"
       ],
-      "postedAt": "2026-01-15T05:58:22.098Z",
+      "postedAt": "2026-01-15T13:29:04.518Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1768456702099_2",
+      "id": "elle_1768483744518_2",
       "title": "This Coach Bag Is the It Bag of 2025—Shop the Styles Selling Out Fast",
       "description": "The Tabby is officially the most in demand bag of the season and these are the versions worth buying now.",
       "author": "Laura Tarafa",
@@ -40,7 +40,7 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/tabbybag26lead-6916347913229.jpg?crop=1xw:0.5xh;center,top"
       ],
-      "postedAt": "2026-01-15T05:58:22.099Z",
+      "postedAt": "2026-01-15T13:29:04.518Z",
       "blockType": "article"
     }
   ]
