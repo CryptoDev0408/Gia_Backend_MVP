@@ -11,51 +11,63 @@ const router = Router();
 
 /**
  * GET /api/v1/blogs/count
- * Get total count of blogs
- * Query params: platform, includeUnapproved (for admins)
- * Returns total count based on filters
+ * Get counts of all blogs (draft, published, all)
+ * Returns: { draft: number, published: number, all: number }
  */
 router.get(
 	'/count',
-	optionalAuth,
 	asyncHandler(async (req: AuthRequest, res: any) => {
-		const platform = req.query.platform as string;
-		const includeUnapproved = req.query.includeUnapproved === 'true';
-		const isAdmin = req.user?.role === 'ADMIN';
+		logger.info('📊 Blog count request received');
 
-		// Build where clause
-		let whereClause = isAdmin && includeUnapproved ? 'WHERE 1=1' : 'WHERE approved = 1';
-		const params: any[] = [];
+		try {
+			// Use single query with conditional sums
+			const countResult = await prisma.$queryRawUnsafe<any[]>(
+				`SELECT
+					COUNT(*) AS cnt_all,
+					SUM(CASE WHEN approved = 1 THEN 1 ELSE 0 END) AS cnt_published,
+					SUM(CASE WHEN approved = 0 THEN 1 ELSE 0 END) AS cnt_draft
+				FROM blogs`
+			);
 
-		if (platform) {
-			whereClause += ` AND platform = ?`;
-			params.push(platform);
+			if (!countResult || countResult.length === 0) {
+				logger.warn('📊 No count result returned from database');
+				return res.json({
+					success: true,
+					data: { counts: { all: 0, published: 0, draft: 0 } },
+				});
+			}
+
+			// Convert BigInt to number immediately
+			const row = countResult[0];
+			const counts = {
+				all: Number(row.cnt_all || BigInt(0)),
+				published: Number(row.cnt_published || BigInt(0)),
+				draft: Number(row.cnt_draft || BigInt(0))
+			};
+
+			logger.info(`📊 Blog counts calculated: draft=${counts.draft}, published=${counts.published}, all=${counts.all}`);
+
+			res.json({
+				success: true,
+				data: { counts },
+			});
+		} catch (error) {
+			logger.error('📊 Error fetching blog counts:', error);
+			res.status(500).json({
+				success: false,
+				error: 'Failed to fetch blog counts',
+				details: error instanceof Error ? error.message : 'Unknown error'
+			});
 		}
-
-		// Get total count
-		const countResult = await prisma.$queryRawUnsafe<any[]>(
-			`SELECT COUNT(*) as total FROM blogs ${whereClause}`,
-			...params
-		);
-		const total = Number(countResult[0].total);
-
-		logger.info(`📊 Blog count request: total=${total}, platform=${platform || 'all'}, includeUnapproved=${includeUnapproved}`);
-
-		res.json({
-			success: true,
-			data: {
-				total,
-			},
-		});
 	})
 );
 
 /**
  * GET /api/v1/blogs
  * Get all approved blogs (published)
- * Query params: page, limit, platform, includeUnapproved (for testing)
+ * Query params: page, limit, platform, filter (draft/published/all - for admins)
  * For regular users: only approved blogs
- * For admins: can see unapproved blogs with includeUnapproved param
+ * For admins: can filter by draft, published, or all
  * If authenticated, includes isLiked status and likesCount for each blog
  */
 router.get(
@@ -68,7 +80,7 @@ router.get(
 		const page = parseInt(req.query.page as string) || 1;
 		const limit = parseInt(req.query.limit as string) || 20;
 		const platform = req.query.platform as string;
-		const includeUnapproved = req.query.includeUnapproved === 'true';
+		const filter = req.query.filter as string; // 'draft', 'published', 'all'
 		const offset = (page - 1) * limit;
 
 		// Build where clause - admins can see unapproved, regular users/guests only see approved
@@ -77,10 +89,19 @@ router.get(
 		const userId = req.user?.userId;
 
 		// Log authentication status for debugging
-		logger.info(`📚 Blog request - isAuthenticated: ${isAuthenticated}, isAdmin: ${isAdmin}, role: ${req.user?.role || 'none'}, includeUnapproved: ${includeUnapproved}`);
+		logger.info(`📚 Blog request - isAuthenticated: ${isAuthenticated}, isAdmin: ${isAdmin}, role: ${req.user?.role || 'none'}, filter: ${filter}`);
 
-		// Only show unapproved blogs if user is admin AND explicitly requested
-		let whereClause = (isAdmin) ? 'WHERE 1=1' : 'WHERE approved = 1';
+		// Build where clause based on filter (admin only)
+		let whereClause = 'WHERE 1=1';
+		if (isAdmin && filter === 'draft') {
+			whereClause += ' AND approved = 0';
+		} else if (isAdmin && filter === 'published') {
+			whereClause += ' AND approved = 1';
+		} else if (!isAdmin) {
+			// Non-admins always see only approved blogs
+			whereClause += ' AND approved = 1';
+		}
+		// For admins with filter='all', show all blogs (1=1)
 
 		logger.info(`📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚📚 ${whereClause}`);
 
@@ -153,14 +174,34 @@ router.get(
 			}
 		}
 
-		// Get total count
+		// Get total count for current filter
 		const countResult = await prisma.$queryRawUnsafe<any[]>(
 			`SELECT COUNT(*) as total FROM blogs ${whereClause}`,
 			...params
 		);
 		const total = Number(countResult[0].total);
 
-		logger.info(`📚 Fetching blogs: page=${page}, limit=${limit}, platform=${platform || 'all'}, includeUnapproved=${includeUnapproved}, found=${blogs.length}`);
+		// Always get counts for all categories - both admin and non-admin users need this
+		logger.info('📊 Fetching counts...');
+		const draftCountResult = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as total FROM blogs WHERE approved = 0`
+		);
+		const publishedCountResult = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT COUNT(*) as total FROM blogs WHERE approved = 1`
+		);
+
+		const draftCount = Number(draftCountResult[0].total);
+		const publishedCount = Number(publishedCountResult[0].total);
+
+		const counts = {
+			draft: draftCount,
+			published: publishedCount,
+			all: draftCount + publishedCount
+		};
+
+		logger.info(`📊 Counts calculated: draft=${counts.draft}, published=${counts.published}, all=${counts.all}, isAdmin=${isAdmin}`);
+
+		logger.info(`📚 Fetching blogs: page=${page}, limit=${limit}, platform=${platform || 'all'}, filter=${filter}, found=${blogs.length}, counts=${JSON.stringify(counts)}`);
 
 		res.json({
 			success: true,
@@ -172,6 +213,7 @@ router.get(
 					total,
 					totalPages: Math.ceil(total / limit),
 				},
+				counts, // Add counts for admin filter buttons
 			},
 		});
 	})
