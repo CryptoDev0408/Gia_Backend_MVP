@@ -181,22 +181,20 @@ router.get(
 		);
 		const total = Number(countResult[0].total);
 
-		// Always get counts for all categories - both admin and non-admin users need this
-		logger.info('📊 Fetching counts...');
-		const draftCountResult = await prisma.$queryRawUnsafe<any[]>(
-			`SELECT COUNT(*) as total FROM blogs WHERE approved = 0`
-		);
-		const publishedCountResult = await prisma.$queryRawUnsafe<any[]>(
-			`SELECT COUNT(*) as total FROM blogs WHERE approved = 1`
+		// Optimized: Get all counts in a single query using conditional SUM
+		const countsResult = await prisma.$queryRawUnsafe<any[]>(
+			`SELECT
+				COUNT(*) AS cnt_all,
+				SUM(CASE WHEN approved = 1 THEN 1 ELSE 0 END) AS cnt_published,
+				SUM(CASE WHEN approved = 0 THEN 1 ELSE 0 END) AS cnt_draft
+			FROM blogs`
 		);
 
-		const draftCount = Number(draftCountResult[0].total);
-		const publishedCount = Number(publishedCountResult[0].total);
-
+		const countsRow = countsResult[0];
 		const counts = {
-			draft: draftCount,
-			published: publishedCount,
-			all: draftCount + publishedCount
+			all: Number(countsRow.cnt_all || BigInt(0)),
+			published: Number(countsRow.cnt_published || BigInt(0)),
+			draft: Number(countsRow.cnt_draft || BigInt(0))
 		};
 
 		logger.info(`📊 Counts calculated: draft=${counts.draft}, published=${counts.published}, all=${counts.all}, isAdmin=${isAdmin}`);
