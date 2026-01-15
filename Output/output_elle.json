@@ -1,24 +1,11 @@
 {
   "source": "Elle Fashion",
   "url": "https://www.elle.com/fashion/",
-  "scrapedAt": "2025-12-30T09:32:22.027Z",
-  "totalItems": 5,
+  "scrapedAt": "2026-01-15T05:58:22.099Z",
+  "totalItems": 3,
   "items": [
     {
-      "id": "elle_1767087142026_0",
-      "title": "Louis Vuitton Celebrates 130 Years of Its Iconic Monogram",
-      "description": "From 1896 to 2026, some things never go out of style.",
-      "author": "Alexandra Hildreth",
-      "text": "Louis Vuitton Celebrates 130 Years of Its Iconic Monogram: From 1896 to 2026, some things never go out of style.",
-      "url": "https://www.elle.com/fashion/a69839119/louis-vuitton-130-years-monogram-celebration/",
-      "images": [
-        "https://hips.hearstapps.com/hmg-prod/images/alma-monogram-2-694ac2c934811.jpg?crop=1.00xw:0.282xh;0,0.331xh"
-      ],
-      "postedAt": "2025-12-30T09:32:22.026Z",
-      "blockType": "article"
-    },
-    {
-      "id": "elle_1767087142026_1",
+      "id": "elle_1768456702098_0",
       "title": "Inside the Art of Runway Soundtracks",
       "description": "",
       "author": "Elle Editorial",
@@ -27,37 +14,24 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/mm-press-pack-3x2-4320-x-28804-6904c2ba94614.jpg?crop=0.668xw:1.00xh;0.170xw,0&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-30T09:32:22.026Z",
+      "postedAt": "2026-01-15T05:58:22.098Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1767087142026_2",
-      "title": "Here Are 2025’s Biggest Fashion Trends",
+      "id": "elle_1768456702098_1",
+      "title": "How Modern Art Is Shaping the Runway",
       "description": "",
       "author": "Elle Editorial",
-      "text": "Here Are 2025’s Biggest Fashion Trends",
-      "url": "https://www.elle.com/fashion/trend-reports/a69879343/2025-biggest-fashion-trends/",
+      "text": "How Modern Art Is Shaping the Runway",
+      "url": "https://www.elle.com/fashion/trend-reports/a69917308/modern-art-runway-trend-spring-summer-2026/",
       "images": [
-        "https://hips.hearstapps.com/hmg-prod/images/wilfree-vasquez-torres-wears-a-mustard-yellow-rectangular-news-photo-1767023883.pjpeg?crop=0.668xw:1.00xh;0.185xw,0&amp;resize=360:*"
+        "https://hips.hearstapps.com/hmg-prod/images/4302d37e-24af-4590-a259-0de57b74d8bb.jpg?crop=0.6656xw:1xh;center,top&amp;resize=360:*"
       ],
-      "postedAt": "2025-12-30T09:32:22.026Z",
+      "postedAt": "2026-01-15T05:58:22.098Z",
       "blockType": "article"
     },
     {
-      "id": "elle_1767087142027_3",
-      "title": "7 Travel Must-Haves for Chic Coast-to-Coast Style",
-      "description": "",
-      "author": "Daisy Melamed Sanders",
-      "text": "7 Travel Must-Haves for Chic Coast-to-Coast Style",
-      "url": "https://www.elle.com/fashion/personal-style/g68853180/ralph-lauren-luxury-travel-style/",
-      "images": [
-        "https://hips.hearstapps.com/hmg-prod/images/elle-lede-68ff88027031c.jpeg?crop=0.6666666666666666xw:1xh;center,top&amp;resize=360:*"
-      ],
-      "postedAt": "2025-12-30T09:32:22.027Z",
-      "blockType": "article"
-    },
-    {
-      "id": "elle_1767087142027_4",
+      "id": "elle_1768456702099_2",
       "title": "This Coach Bag Is the It Bag of 2025—Shop the Styles Selling Out Fast",
       "description": "The Tabby is officially the most in demand bag of the season and these are the versions worth buying now.",
       "author": "Laura Tarafa",
@@ -66,7 +40,7 @@
       "images": [
         "https://hips.hearstapps.com/hmg-prod/images/tabbybag26lead-6916347913229.jpg?crop=1xw:0.5xh;center,top"
       ],
-      "postedAt": "2025-12-30T09:32:22.027Z",
+      "postedAt": "2026-01-15T05:58:22.099Z",
       "blockType": "article"
     }
   ]
